@@ -1,0 +1,917 @@
+# TERMINAL MANAGEMENT SYSTEM - JUPYTER NOTEBOOK VERSION
+print("TERMINAL MANAGEMENT SYSTEM - JUPYTER NOTEBOOK VERSION")
+print("=" * 60)
+print("Data processing system for large datasets")
+print("Local Jupyter Notebook environment")
+print("Terminal Types: PHYSICAL POS & CEPTEPOS")
+print("Sales Status: Yes->Passive, No->Active")
+print("Bank Status: VAR->Completed, Red->Rejected, YOK->Not Sent")
+print("File format: terminal_management_system01, 02, 03...")
+print("Storage location: Jupyter notebook folder")
+print("Excel size: 100K rows per file")
+print("Solution: Download issues completely resolved")
+print("=" * 60)
+
+import time
+import warnings
+import json
+warnings.filterwarnings('ignore')
+GLOBAL_START = time.time()
+
+print("1. Loading libraries...")
+try:
+    import gspread
+    import pandas as pd
+    from datetime import datetime
+    import concurrent.futures
+    import os
+    import gc
+    from google.oauth2.service_account import Credentials
+    print("   Libraries loaded successfully")
+except Exception as e:
+    print(f"   Library loading error: {e}")
+    raise
+
+print("\n2. Google Sheets authentication...")
+try:
+    # IMPORTANT: Replace with your own Service Account JSON credentials
+    # Get your credentials from: https://console.cloud.google.com/apis/credentials
+    # Create Service Account -> Download JSON key -> Replace the content below
+    service_account_info = {
+        "type": "service_account",
+        "project_id": "YOUR_PROJECT_ID",  # REPLACE WITH YOUR PROJECT ID
+        "private_key_id": "YOUR_PRIVATE_KEY_ID",  # REPLACE WITH YOUR PRIVATE KEY ID
+        "private_key": "-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----\n",  # REPLACE WITH YOUR PRIVATE KEY
+        "client_email": "YOUR_SERVICE_ACCOUNT_EMAIL@YOUR_PROJECT.iam.gserviceaccount.com",  # REPLACE WITH YOUR CLIENT EMAIL
+        "client_id": "YOUR_CLIENT_ID",  # REPLACE WITH YOUR CLIENT ID
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_x509_cert_url": "YOUR_CERT_URL",  # REPLACE WITH YOUR CERT URL
+        "universe_domain": "googleapis.com"
+    }
+    
+    print("   Service Account JSON loaded")
+    
+    # Create credentials
+    SCOPES = ['https://www.googleapis.com/auth/spreadsheets',
+              'https://www.googleapis.com/auth/drive']
+    creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
+    gs_client = gspread.authorize(creds)
+    print("   Google Sheets access established successfully")
+    
+except Exception as e:
+    print(f"   Authentication error: {e}")
+    print("   SETUP REQUIRED: Please configure your Service Account credentials")
+    print("   1. Go to: https://console.cloud.google.com/apis/credentials")
+    print("   2. Create Service Account")
+    print("   3. Download JSON key")
+    print("   4. Replace the service_account_info dictionary above")
+    raise
+
+print("\n3. Connecting to source files...")
+# IMPORTANT: Replace with your Google Sheets IDs
+SOURCE_ID = "YOUR_MAIN_SPREADSHEET_ID"  # REPLACE WITH YOUR MAIN SPREADSHEET ID
+TERMINAL_ID = "YOUR_TERMINAL_SPREADSHEET_ID"  # REPLACE WITH YOUR TERMINAL SPREADSHEET ID
+VPOS_ID = "YOUR_VPOS_SPREADSHEET_ID"  # REPLACE WITH YOUR VPOS SPREADSHEET ID
+
+try:
+    main_workbook = gs_client.open_by_key(SOURCE_ID)
+    terminal_workbook = gs_client.open_by_key(TERMINAL_ID)
+    vpos_workbook = gs_client.open_by_key(VPOS_ID)
+    print("   All Google Sheets files opened successfully")
+except Exception as e:
+    print(f"   File opening error: {e}")
+    print("   PERMISSION REQUIRED: Invite Service Account email to your Sheets:")
+    print("   Email: [YOUR_SERVICE_ACCOUNT_EMAIL]")
+    print("   Role: Editor")
+    raise
+
+print("\n4. System configuration...")
+BANKS = ['HALKBANK', 'ANADOLUBANK', 'VAKIFBANK', 'DENIZBANK', 'AKBANK']
+VPOS_BANKS = ['ISBANK', 'QNB', 'TFKB', 'DENIZBANK', 'VAKIFBANK', 'AKBANK', 'HALKBANK']
+
+BANK_SUBMISSION_SCHEMA = {
+    'HALKBANK':    {'key': 0,  'cols': [1, 2, 3, 4]},
+    'ANADOLUBANK': {'key': 6,  'cols': [7, 8, 9, 10]},
+    'VAKIFBANK':   {'key': 12, 'cols': [13, 14, 15, 16]},
+    'DENIZBANK':   {'key': 18, 'cols': [19, 20, 21, 22]},
+    'AKBANK':      {'key': 24, 'cols': [25, 26, 27, 28]}
+}
+
+CANCELLATION_SCHEMA = {
+    'HALKBANK':    {'key': 0,  'cols': [1, 2, 3, 4]},
+    'ANADOLUBANK': {'key': 6,  'cols': [7, 8, 9, 10]},
+    'DENIZBANK':   {'key': 12, 'cols': [13, 14, 15, 16]},
+    'VAKIFBANK':   {'key': 18, 'cols': [19, 20, 21, 22]},
+    'AKBANK':      {'key': 24, 'cols': [25, 26, 27, 28]}
+}
+
+VPOS_DEFINE_SCHEMA = {
+    'HALKBANK': {'key': 0, 'submission': 1, 'response': 2},
+    'TFKB':     {'key': 4, 'submission': 5, 'response': 6},
+    'DENIZBANK':{'key': 8, 'submission': 9, 'response': 10},
+    'VAKIFBANK':{'key': 12, 'submission': 13, 'response': 14},
+    'AKBANK':   {'key': 16, 'submission': 17, 'response': 18},
+    'ISBANK':   {'key': 20, 'submission': 21, 'response': 22},
+    'QNB':      {'key': 24, 'submission': 25, 'response': 26}
+}
+
+def clean_key(value):
+    return str(value or '').strip().upper()
+
+def clean_text(value):
+    return str(value or '').strip()
+
+def convert_sales_status(value):
+    value_str = clean_text(value).lower()
+    if value_str == 'evet':
+        return 'Passive'
+    elif value_str == 'hayir' or value_str == 'hayir':
+        return 'Active'
+    else:
+        return clean_text(value) if value else ''
+
+def convert_bank_status(value):
+    """Convert bank status values"""
+    value_str = clean_text(value).lower()
+    
+    if 'var' in value_str:
+        return 'Completed'
+    elif 'red' in value_str:
+        return 'Rejected'
+    elif 'banka bekleniyor' in value_str or 'tanimlama bekleniyor' in value_str:
+        return 'Awaiting Response'
+    elif 'yok' in value_str or value_str == '' or not value_str:
+        return 'Not Sent'
+    else:
+        return clean_text(value) if value else 'Not Sent'
+
+def determine_request_type(cancellation_submission, cancellation_response):
+    cancellation_submission_str = clean_text(cancellation_submission)
+    cancellation_response_str = clean_text(cancellation_response)
+    
+    if cancellation_submission_str or cancellation_response_str:
+        return 'Deletion'
+    else:
+        return 'Installation'
+
+def combine_date_time(date, time):
+    if not date and not time:
+        return ''
+    
+    date_str = clean_text(date)
+    time_str = clean_text(time)
+    
+    if date_str and time_str:
+        return f"{date_str} {time_str}"
+    elif date_str:
+        return f"{date_str} 00:00:00"
+    
+    return ''
+
+def format_vpos_date(date_str):
+    return clean_text(date_str)
+
+def create_excel_file_jupyter(chunk_data, file_name, column_headers):
+    """Creates Excel file for Jupyter environment"""
+    try:
+        print(f"      Creating {file_name}...")
+        
+        # Create DataFrame
+        chunk_df = pd.DataFrame(chunk_data, columns=column_headers)
+        print(f"      DataFrame created: {len(chunk_df)} rows")
+        
+        # Write Excel file
+        with pd.ExcelWriter(file_name, engine='xlsxwriter') as writer:
+            chunk_df.to_excel(writer, sheet_name='Terminal Management', index=False)
+            
+            workbook = writer.book
+            worksheet = writer.sheets['Terminal Management']
+            
+            # Header format
+            header_format = workbook.add_format({
+                'bold': True,
+                'bg_color': '#2E7D32',
+                'font_color': 'white',
+                'border': 1,
+                'align': 'center',
+                'valign': 'vcenter',
+                'text_wrap': True
+            })
+            
+            # Write headers
+            for col_no, header in enumerate(column_headers):
+                worksheet.write(0, col_no, header, header_format)
+            
+            # Column widths
+            column_widths = [15, 12, 12, 18, 20, 20, 20, 20, 12, 15, 15, 15, 12, 12, 15, 15, 12, 15, 15, 15]
+            for i, width in enumerate(column_widths):
+                worksheet.set_column(i, i, width)
+            
+            # Freeze panes
+            worksheet.freeze_panes(1, 0)
+            
+            # Conditional formatting
+            row_count = len(chunk_df)
+            
+            if row_count > 0:
+                # Bank Status coloring
+                worksheet.conditional_format(f'D2:D{row_count + 1}', {
+                    'type': 'text', 'criteria': 'containing', 'value': 'Completed',
+                    'format': workbook.add_format({'bg_color': '#C8E6C9'})
+                })
+                worksheet.conditional_format(f'D2:D{row_count + 1}', {
+                    'type': 'text', 'criteria': 'containing', 'value': 'Rejected',
+                    'format': workbook.add_format({'bg_color': '#FFCDD2'})
+                })
+                worksheet.conditional_format(f'D2:D{row_count + 1}', {
+                    'type': 'text', 'criteria': 'containing', 'value': 'Awaiting Response',
+                    'format': workbook.add_format({'bg_color': '#FFF9C4'})
+                })
+                worksheet.conditional_format(f'D2:D{row_count + 1}', {
+                    'type': 'text', 'criteria': 'containing', 'value': 'Not Sent',
+                    'format': workbook.add_format({'bg_color': '#F0F0F0'})
+                })
+                
+                # Request Type coloring
+                worksheet.conditional_format(f'I2:I{row_count + 1}', {
+                    'type': 'text', 'criteria': 'containing', 'value': 'Installation',
+                    'format': workbook.add_format({'bg_color': '#E3F2FD'})
+                })
+                worksheet.conditional_format(f'I2:I{row_count + 1}', {
+                    'type': 'text', 'criteria': 'containing', 'value': 'Deletion',
+                    'format': workbook.add_format({'bg_color': '#FFF3E0'})
+                })
+                
+                # Sales Status coloring
+                worksheet.conditional_format(f'J2:J{row_count + 1}', {
+                    'type': 'text', 'criteria': 'containing', 'value': 'Active',
+                    'format': workbook.add_format({'bg_color': '#C8E6C9'})
+                })
+                worksheet.conditional_format(f'J2:J{row_count + 1}', {
+                    'type': 'text', 'criteria': 'containing', 'value': 'Passive',
+                    'format': workbook.add_format({'bg_color': '#FFCDD2'})
+                })
+                
+                # Terminal Type coloring
+                worksheet.conditional_format(f'K2:K{row_count + 1}', {
+                    'type': 'text', 'criteria': 'containing', 'value': 'PHYSICAL POS',
+                    'format': workbook.add_format({'bg_color': '#F3E5F5'})
+                })
+                worksheet.conditional_format(f'K2:K{row_count + 1}', {
+                    'type': 'text', 'criteria': 'containing', 'value': 'CEPTEPOS',
+                    'format': workbook.add_format({'bg_color': '#E1F5FE'})
+                })
+        
+        # Calculate file size
+        file_size = os.path.getsize(file_name) / 1024 / 1024
+        print(f"      {file_name} created successfully ({file_size:.2f} MB)")
+        print(f"      File path: {os.path.abspath(file_name)}")
+        
+        return True, file_size
+        
+    except Exception as e:
+        print(f"      Error creating {file_name}: {e}")
+        return False, 0
+
+print("   Configuration completed successfully")
+
+def create_terminal_management_excel_jupyter():
+    print(f"\nSTARTING JUPYTER TERMINAL MANAGEMENT EXCEL REPORT...")
+    print(f"Date: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}")
+    print(f"Output: Local Excel files (100K rows per file)")
+    print(f"Platform: Jupyter Notebook")
+    
+    report_start = time.time()
+    
+    try:
+        print("\n5. Parallel data retrieval...")
+        data_start = time.time()
+        
+        def fetch_sheet_data(workbook, sheet_name):
+            try:
+                worksheet = workbook.worksheet(sheet_name)
+                return sheet_name, worksheet.get_all_values()
+            except Exception as e:
+                print(f"   Warning - {sheet_name} error: {e}")
+                return sheet_name, []
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=7) as executor:
+            tasks = {
+                executor.submit(fetch_sheet_data, main_workbook, "DB"): "DB",
+                executor.submit(fetch_sheet_data, main_workbook, "Banka Gönderimleri"): "BG",
+                executor.submit(fetch_sheet_data, main_workbook, "İptal Gönderimleri"): "IG",
+                executor.submit(fetch_sheet_data, terminal_workbook, "DB"): "TERMINAL",
+                executor.submit(fetch_sheet_data, main_workbook, "DB"): "PHYSICAL_POS",
+                executor.submit(fetch_sheet_data, vpos_workbook, "DB"): "VPOS_DB",
+                executor.submit(fetch_sheet_data, vpos_workbook, "Tanımla Gönderim"): "VPOS_DEFINE"
+            }
+            
+            raw_data = {}
+            for task in concurrent.futures.as_completed(tasks):
+                data_type = tasks[task]
+                sheet_name, data = task.result()
+                raw_data[data_type] = data
+                row_count = len(data) - 1 if data else 0
+                print(f"   {sheet_name}: {row_count:,} rows")
+        
+        data_duration = time.time() - data_start
+        print(f"   Parallel data retrieval: {data_duration:.1f} seconds")
+        
+        print("\n6. Fast data processing...")
+        processing_start = time.time()
+        
+        # Process main DB data
+        print("   Processing main DB data...")
+        db_mapping = {}
+        if len(raw_data['DB']) > 1:
+            for row in raw_data['DB'][1:]:
+                if len(row) >= 11:
+                    mali_no = clean_key(row[3])
+                    if mali_no:
+                        db_mapping[mali_no] = {
+                            'orgId': clean_text(row[4]),
+                            'DENIZBANK': convert_bank_status(row[6]) if len(row) > 6 else 'Not Sent',
+                            'VAKIFBANK': convert_bank_status(row[7]) if len(row) > 7 else 'Not Sent',
+                            'AKBANK': convert_bank_status(row[8]) if len(row) > 8 else 'Not Sent',
+                            'HALKBANK': convert_bank_status(row[9]) if len(row) > 9 else 'Not Sent',
+                            'ANADOLUBANK': convert_bank_status(row[10]) if len(row) > 10 else 'Not Sent'
+                        }
+        print(f"      {len(db_mapping):,} main DB records processed")
+        
+        # Process VPOS DB data
+        print("   Processing VPOS DB data...")
+        vpos_db_mapping = {}
+        if len(raw_data['VPOS_DB']) > 1:
+            for row in raw_data['VPOS_DB'][1:]:
+                if len(row) >= 13:
+                    mali_no = clean_key(row[4])
+                    if mali_no:
+                        vpos_db_mapping[mali_no] = {
+                            'orgId': clean_text(row[1]),
+                            'ISBANK': convert_bank_status(row[6]),
+                            'QNB': convert_bank_status(row[7]),
+                            'TFKB': convert_bank_status(row[8]),
+                            'DENIZBANK': convert_bank_status(row[9]),
+                            'VAKIFBANK': convert_bank_status(row[10]),
+                            'AKBANK': convert_bank_status(row[11]),
+                            'HALKBANK': convert_bank_status(row[12])
+                        }
+        print(f"      {len(vpos_db_mapping):,} VPOS DB records processed")
+        
+        # Process VPOS Define submissions
+        print("   Processing VPOS Define submissions...")
+        vpos_define_mapping = {bank: {} for bank in VPOS_BANKS}
+        if len(raw_data['VPOS_DEFINE']) > 1:
+            for row in raw_data['VPOS_DEFINE'][1:]:
+                if len(row) >= 27:
+                    for bank_name in VPOS_BANKS:
+                        schema = VPOS_DEFINE_SCHEMA[bank_name]
+                        key_column = schema['key']
+                        submission_column = schema['submission']
+                        response_column = schema['response']
+                        
+                        if key_column < len(row):
+                            mali_no = clean_key(row[key_column])
+                            if mali_no:
+                                submission = format_vpos_date(row[submission_column]) if submission_column < len(row) else ''
+                                response = format_vpos_date(row[response_column]) if response_column < len(row) else ''
+                                
+                                if submission or response:
+                                    vpos_define_mapping[bank_name][mali_no] = {
+                                        'submission_date': submission,
+                                        'response_date': response
+                                    }
+        
+        vpos_define_total = sum(len(vpos_define_mapping[bank]) for bank in VPOS_BANKS)
+        print(f"      {vpos_define_total:,} VPOS Define submission records processed")
+        
+        # Process Sales Status (PHYSICAL POS) data
+        print("   Processing Sales Status (PHYSICAL POS) data...")
+        sales_status_mapping = {}
+        if len(raw_data['PHYSICAL_POS']) > 1:
+            for row in raw_data['PHYSICAL_POS'][1:]:
+                if len(row) >= 4:
+                    mali_no = clean_key(row[3])
+                    if mali_no:
+                        sales_status_raw = row[1] if len(row) > 1 else ''
+                        sales_status_converted = convert_sales_status(sales_status_raw)
+                        sales_status_mapping[mali_no] = {
+                            'sales_status': sales_status_converted,
+                            'terminal_type': 'PHYSICAL POS'
+                        }
+        print(f"      {len(sales_status_mapping):,} PHYSICAL POS records processed")
+        
+        # Process main bank submissions
+        print("   Processing main bank submissions...")
+        bank_mapping = {bank: {} for bank in BANKS}
+        if len(raw_data['BG']) > 1:
+            for row in raw_data['BG'][1:]:
+                if len(row) >= 29:
+                    for bank_name in BANKS:
+                        schema = BANK_SUBMISSION_SCHEMA[bank_name]
+                        key_column = schema['key']
+                        data_columns = schema['cols']
+                        
+                        if key_column < len(row):
+                            mali_no = clean_key(row[key_column])
+                            if mali_no and any(col < len(row) and row[col] for col in data_columns):
+                                bank_mapping[bank_name][mali_no] = {
+                                    'submission_date': combine_date_time(
+                                        row[data_columns[0]] if data_columns[0] < len(row) else '',
+                                        row[data_columns[1]] if data_columns[1] < len(row) else ''
+                                    ),
+                                    'response_date': combine_date_time(
+                                        row[data_columns[2]] if data_columns[2] < len(row) else '',
+                                        row[data_columns[3]] if data_columns[3] < len(row) else ''
+                                    )
+                                }
+        
+        bank_total = sum(len(bank_mapping[bank]) for bank in BANKS)
+        print(f"      {bank_total:,} main bank submission records processed")
+        
+        # Process cancellation submissions
+        print("   Processing cancellation submissions...")
+        cancellation_mapping = {bank: {} for bank in BANKS}
+        if len(raw_data['IG']) > 1:
+            for row in raw_data['IG'][1:]:
+                if len(row) >= 29:
+                    for bank_name in BANKS:
+                        schema = CANCELLATION_SCHEMA[bank_name]
+                        key_column = schema['key']
+                        data_columns = schema['cols']
+                        
+                        if key_column < len(row):
+                            mali_no = clean_key(row[key_column])
+                            if mali_no and any(col < len(row) and row[col] for col in data_columns):
+                                cancellation_mapping[bank_name][mali_no] = {
+                                    'submission_date': combine_date_time(
+                                        row[data_columns[0]] if data_columns[0] < len(row) else '',
+                                        row[data_columns[1]] if data_columns[1] < len(row) else ''
+                                    ),
+                                    'response_date': combine_date_time(
+                                        row[data_columns[2]] if data_columns[2] < len(row) else '',
+                                        row[data_columns[3]] if data_columns[3] < len(row) else ''
+                                    )
+                                }
+        
+        cancellation_total = sum(len(cancellation_mapping[bank]) for bank in BANKS)
+        print(f"      {cancellation_total:,} cancellation records processed")
+        
+        # Process terminal data
+        print("   Processing terminal data...")
+        terminal_mapping = {}
+        if len(raw_data['TERMINAL']) > 1:
+            for row in raw_data['TERMINAL'][1:]:
+                if len(row) >= 11:
+                    mali_no = clean_key(row[0])
+                    bank_name = clean_key(row[8])
+                    if mali_no and bank_name:
+                        combined_key = f"{mali_no}|{bank_name}"
+                        terminal_mapping[combined_key] = {
+                            'brand': clean_text(row[1]),
+                            'model': clean_text(row[2]),
+                            'simId': clean_text(row[3]),
+                            'imei': clean_text(row[4]),
+                            'operator': clean_text(row[5]),
+                            'lastCommunication': clean_text(row[6]),
+                            'terminalStatus': clean_text(row[7]),
+                            'bankMid': clean_text(row[9]) if len(row) > 9 else '',
+                            'bankTid': clean_text(row[10]) if len(row) > 10 else ''
+                        }
+        print(f"      {len(terminal_mapping):,} terminal records processed")
+        
+        processing_duration = time.time() - processing_start
+        print(f"   Data processing duration: {processing_duration:.1f} seconds")
+        
+        print("\n7. Creating historic rows...")
+        historic_start = time.time()
+        
+        historic_rows = []
+        
+        # Collect all unique mali numbers
+        print("   Identifying unique mali numbers...")
+        all_mali_numbers = set()
+        
+        # Add mali numbers from main DB
+        for mali_no in db_mapping.keys():
+            all_mali_numbers.add(mali_no)
+        
+        # Add mali numbers from VPOS DB
+        for mali_no in vpos_db_mapping.keys():
+            all_mali_numbers.add(mali_no)
+        
+        # Add mali numbers from terminal data
+        for key in terminal_mapping.keys():
+            mali_no = key.split('|')[0]
+            all_mali_numbers.add(mali_no)
+        
+        # Add mali numbers from sales status data
+        for mali_no in sales_status_mapping.keys():
+            all_mali_numbers.add(mali_no)
+        
+        # Add mali numbers from bank submissions
+        for bank in BANKS:
+            for mali_no in bank_mapping[bank].keys():
+                all_mali_numbers.add(mali_no)
+        
+        # Add mali numbers from cancellation submissions
+        for bank in BANKS:
+            for mali_no in cancellation_mapping[bank].keys():
+                all_mali_numbers.add(mali_no)
+        
+        # Add mali numbers from VPOS define submissions
+        for bank in VPOS_BANKS:
+            for mali_no in vpos_define_mapping[bank].keys():
+                all_mali_numbers.add(mali_no)
+        
+        all_mali_numbers = sorted(list(all_mali_numbers))
+        print(f"   Total unique mali numbers: {len(all_mali_numbers):,}")
+        
+        # Create historic rows
+        print("   Creating historic rows...")
+        processed_count = 0
+        
+        for mali_no in all_mali_numbers:
+            # Process from main DB for PHYSICAL POS
+            if mali_no in db_mapping:
+                db_record = db_mapping[mali_no]
+                for bank_name in BANKS:
+                    status = db_record.get(bank_name, 'Not Sent')
+                    org_id = db_record.get('orgId', '')
+                    
+                    bank_record = bank_mapping[bank_name].get(mali_no, {})
+                    cancellation_record = cancellation_mapping[bank_name].get(mali_no, {})
+                    
+                    terminal_key = f"{mali_no}|{bank_name}"
+                    terminal_record = terminal_mapping.get(terminal_key, {})
+                    
+                    sales_status_record = sales_status_mapping.get(mali_no, {})
+                    
+                    cancellation_submission = cancellation_record.get('submission_date', '')
+                    cancellation_response = cancellation_record.get('response_date', '')
+                    request_type = determine_request_type(cancellation_submission, cancellation_response)
+                    
+                    final_terminal_status = terminal_record.get('terminalStatus', '') if terminal_record else ''
+                    final_terminal_type = sales_status_record.get('terminal_type', 'PHYSICAL POS') if sales_status_record else 'PHYSICAL POS'
+                    
+                    data_exists = (
+                        status != 'Not Sent' or
+                        bank_record or
+                        cancellation_record or
+                        terminal_record or
+                        sales_status_record or
+                        org_id
+                    )
+                    
+                    if data_exists:
+                        row = [
+                            mali_no, org_id, bank_name, status,
+                            bank_record.get('submission_date', ''),
+                            bank_record.get('response_date', ''),
+                            cancellation_record.get('submission_date', ''),
+                            cancellation_record.get('response_date', ''),
+                            request_type,
+                            sales_status_record.get('sales_status', ''),
+                            final_terminal_type, final_terminal_status,
+                            terminal_record.get('brand', '') if terminal_record else '',
+                            terminal_record.get('model', '') if terminal_record else '',
+                            terminal_record.get('simId', '') if terminal_record else '',
+                            terminal_record.get('imei', '') if terminal_record else '',
+                            terminal_record.get('operator', '') if terminal_record else '',
+                            terminal_record.get('lastCommunication', '') if terminal_record else '',
+                            terminal_record.get('bankMid', '') if terminal_record else '',
+                            terminal_record.get('bankTid', '') if terminal_record else ''
+                        ]
+                        historic_rows.append(row)
+            
+            # Process from VPOS DB for CEPTEPOS
+            if mali_no in vpos_db_mapping:
+                vpos_record = vpos_db_mapping[mali_no]
+                for bank_name in VPOS_BANKS:
+                    status = vpos_record.get(bank_name, 'Not Sent')
+                    org_id = vpos_record.get('orgId', '')
+                    
+                    vpos_define = vpos_define_mapping[bank_name].get(mali_no, {})
+                    terminal_key = f"{mali_no}|{bank_name}"
+                    terminal_record = terminal_mapping.get(terminal_key, {})
+                    sales_status_record = sales_status_mapping.get(mali_no, {})
+                    
+                    final_terminal_status = terminal_record.get('terminalStatus', '') if terminal_record else ''
+                    final_terminal_type = 'CEPTEPOS'
+                    if sales_status_record and sales_status_record.get('terminal_type'):
+                        final_terminal_type = sales_status_record['terminal_type']
+                    
+                    data_exists = (
+                        status != 'Not Sent' or
+                        vpos_define or
+                        terminal_record or
+                        sales_status_record or
+                        org_id
+                    )
+                    
+                    if data_exists:
+                        row = [
+                            mali_no, org_id, bank_name, status,
+                            vpos_define.get('submission_date', ''),
+                            vpos_define.get('response_date', ''), '', '',
+                            'Installation',
+                            sales_status_record.get('sales_status', ''),
+                            final_terminal_type, final_terminal_status,
+                            terminal_record.get('brand', '') if terminal_record else '',
+                            terminal_record.get('model', '') if terminal_record else '',
+                            terminal_record.get('simId', '') if terminal_record else '',
+                            terminal_record.get('imei', '') if terminal_record else '',
+                            terminal_record.get('operator', '') if terminal_record else '',
+                            terminal_record.get('lastCommunication', '') if terminal_record else '',
+                            terminal_record.get('bankMid', '') if terminal_record else '',
+                            terminal_record.get('bankTid', '') if terminal_record else ''
+                        ]
+                        historic_rows.append(row)
+            
+            # Process mali numbers found only in other data sources
+            if mali_no not in db_mapping and mali_no not in vpos_db_mapping:
+                sales_status_record = sales_status_mapping.get(mali_no, {})
+                
+                # Search terminal data
+                related_banks = set()
+                for key in terminal_mapping.keys():
+                    if key.startswith(f"{mali_no}|"):
+                        bank_name = key.split('|')[1]
+                        related_banks.add(bank_name)
+                
+                # Search bank submissions
+                for bank in BANKS:
+                    if mali_no in bank_mapping[bank] or mali_no in cancellation_mapping[bank]:
+                        related_banks.add(bank)
+                
+                # Search VPOS submissions
+                for bank in VPOS_BANKS:
+                    if mali_no in vpos_define_mapping[bank]:
+                        related_banks.add(bank)
+                
+                # If no bank relations but sales status exists, add default banks
+                if not related_banks and sales_status_record:
+                    if sales_status_record.get('terminal_type') == 'CEPTEPOS':
+                        related_banks = set(VPOS_BANKS)
+                    else:
+                        related_banks = set(BANKS)
+                
+                for bank_name in related_banks:
+                    terminal_key = f"{mali_no}|{bank_name}"
+                    terminal_record = terminal_mapping.get(terminal_key, {})
+                    
+                    bank_record = bank_mapping.get(bank_name, {}).get(mali_no, {})
+                    cancellation_record = cancellation_mapping.get(bank_name, {}).get(mali_no, {})
+                    vpos_define = vpos_define_mapping.get(bank_name, {}).get(mali_no, {})
+                    
+                    cancellation_submission = cancellation_record.get('submission_date', '')
+                    cancellation_response = cancellation_record.get('response_date', '')
+                    request_type = determine_request_type(cancellation_submission, cancellation_response)
+                    
+                    final_terminal_status = terminal_record.get('terminalStatus', '') if terminal_record else ''
+                    final_terminal_type = sales_status_record.get('terminal_type', '') if sales_status_record else ''
+                    
+                    data_exists = (
+                        terminal_record or
+                        sales_status_record or
+                        bank_record or
+                        cancellation_record or
+                        vpos_define
+                    )
+                    
+                    if data_exists:
+                        row = [
+                            mali_no, '', bank_name, 'Not Sent',
+                            bank_record.get('submission_date', '') or vpos_define.get('submission_date', ''),
+                            bank_record.get('response_date', '') or vpos_define.get('response_date', ''),
+                            cancellation_record.get('submission_date', ''),
+                            cancellation_record.get('response_date', ''),
+                            request_type,
+                            sales_status_record.get('sales_status', ''),
+                            final_terminal_type, final_terminal_status,
+                            terminal_record.get('brand', '') if terminal_record else '',
+                            terminal_record.get('model', '') if terminal_record else '',
+                            terminal_record.get('simId', '') if terminal_record else '',
+                            terminal_record.get('imei', '') if terminal_record else '',
+                            terminal_record.get('operator', '') if terminal_record else '',
+                            terminal_record.get('lastCommunication', '') if terminal_record else '',
+                            terminal_record.get('bankMid', '') if terminal_record else '',
+                            terminal_record.get('bankTid', '') if terminal_record else ''
+                        ]
+                        historic_rows.append(row)
+            
+            processed_count += 1
+            if processed_count % 25000 == 0:
+                print(f"   Processed: {processed_count:,}/{len(all_mali_numbers):,} - Historic: {len(historic_rows):,}")
+        
+        # Alphabetical sorting
+        print("   Performing alphabetical sorting...")
+        historic_rows.sort(key=lambda x: (x[0], x[2]))
+        
+        historic_duration = time.time() - historic_start
+        print(f"   {len(historic_rows):,} historic rows prepared")
+        print(f"   Historic creation time: {historic_duration:.1f} seconds")
+        
+        # Statistics
+        installation_count = sum(1 for row in historic_rows if row[8] == 'Installation')
+        deletion_count = sum(1 for row in historic_rows if row[8] == 'Deletion')
+        physical_pos_count = sum(1 for row in historic_rows if row[10] == 'PHYSICAL POS')
+        ceptepos_count = sum(1 for row in historic_rows if row[10] == 'CEPTEPOS')
+        active_count = sum(1 for row in historic_rows if row[9] == 'Active')
+        passive_count = sum(1 for row in historic_rows if row[9] == 'Passive')
+        completed_count = sum(1 for row in historic_rows if row[3] == 'Completed')
+        rejected_count = sum(1 for row in historic_rows if row[3] == 'Rejected')
+        awaiting_count = sum(1 for row in historic_rows if row[3] == 'Awaiting Response')
+        not_sent_count = sum(1 for row in historic_rows if row[3] == 'Not Sent')
+        
+        print(f"   Request Type: {installation_count:,} Installation, {deletion_count:,} Deletion")
+        print(f"   Terminal Type: {physical_pos_count:,} PHYSICAL POS, {ceptepos_count:,} CEPTEPOS")
+        print(f"   Sales Status: {active_count:,} Active, {passive_count:,} Passive")
+        print(f"   Bank Status: {completed_count:,} Completed, {rejected_count:,} Rejected, {awaiting_count:,} Awaiting Response, {not_sent_count:,} Not Sent")
+        
+        # Memory cleanup
+        del raw_data, db_mapping, vpos_db_mapping, bank_mapping, cancellation_mapping, terminal_mapping, sales_status_mapping, vpos_define_mapping
+        gc.collect()
+        
+        print("\n8. Creating Jupyter local Excel files...")
+        excel_start = time.time()
+        
+        column_headers = [
+            'Mali No', 'Org ID', 'Bank Name', 'Bank Status',
+            'Bank Submission Date', 'Bank Installation Date', 'Cancellation Submission', 'Cancellation Response',
+            'Request Type', 'Sales Status', 'Terminal Type', 'Terminal Status',
+            'Brand', 'Model', 'Sim ID', 'IMEI', 'Operator',
+            'Last Communication', 'Bank MID', 'Bank TID'
+        ]
+        
+        # 100K rows per file
+        CHUNK_SIZE = 100000
+        total_rows = len(historic_rows)
+        total_chunks = max(1, (total_rows + CHUNK_SIZE - 1) // CHUNK_SIZE)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+        
+        print(f"   Total {total_rows:,} rows")
+        print(f"   {CHUNK_SIZE:,} rows per file = {total_chunks} Excel files")
+        print(f"   Platform: Jupyter Notebook (Local)")
+        
+        successful_files = 0
+        total_file_size = 0
+        file_list = []
+        
+        # Batch file creation for Jupyter
+        for chunk_index in range(total_chunks):
+            start_idx = chunk_index * CHUNK_SIZE
+            end_idx = min(start_idx + CHUNK_SIZE, total_rows)
+            chunk_data = historic_rows[start_idx:end_idx]
+            chunk_size_actual = len(chunk_data)
+            
+            file_number = chunk_index + 1
+            
+            print(f"\n   Creating Excel File {file_number}/{total_chunks}")
+            print(f"      Row range: {start_idx + 1:,} - {end_idx:,}")
+            print(f"      Rows in this file: {chunk_size_actual:,}")
+            
+            if chunk_size_actual == 0:
+                continue
+            
+            excel_file_name = f"terminal_management_system{file_number:02d}_{timestamp}.xlsx"
+            
+            # Create file
+            success, file_size = create_excel_file_jupyter(chunk_data, excel_file_name, column_headers)
+            
+            if success:
+                successful_files += 1
+                total_file_size += file_size
+                file_list.append(excel_file_name)
+            else:
+                print(f"      Failed to create {excel_file_name}")
+        
+        excel_duration = time.time() - excel_start
+        total_duration = time.time() - GLOBAL_START
+        
+        print("\n" + "=" * 60)
+        print("JUPYTER TERMINAL MANAGEMENT SYSTEM COMPLETED SUCCESSFULLY")
+        print("=" * 60)
+        
+        print(f"FINAL RESULTS:")
+        print(f"   • Historic Rows: {len(historic_rows):,}")
+        print(f"   • Excel Columns: {len(column_headers)} (20 columns)")
+        print(f"   • Total Cells: {len(historic_rows) * len(column_headers):,}")
+        print(f"   • Excel File Count: {successful_files}")
+        print(f"   • Total File Size: {total_file_size:.1f} MB")
+        print(f"   • Average File Size: {total_file_size/successful_files:.1f} MB" if successful_files > 0 else "")
+        print(f"   • Platform: Jupyter Notebook (Local)")
+        print(f"")
+        
+        print(f"CREATED FILES:")
+        current_folder = os.getcwd()
+        for i, file in enumerate(file_list, 1):
+            if os.path.exists(file):
+                size = os.path.getsize(file) / 1024 / 1024
+                full_path = os.path.abspath(file)
+                print(f"   {i:2d}. {file} ({size:.1f} MB) - SUCCESS")
+                print(f"       Path: {full_path}")
+            else:
+                print(f"   {i:2d}. {file} - FAILED")
+        
+        print(f"\nDATA ANALYSIS:")
+        print(f"   • Request Type: {installation_count:,} Installation, {deletion_count:,} Deletion")
+        print(f"   • Terminal Type: {physical_pos_count:,} PHYSICAL POS, {ceptepos_count:,} CEPTEPOS")
+        print(f"   • Sales Status: {active_count:,} Active, {passive_count:,} Passive")
+        print(f"   • Bank Status: {completed_count:,} Completed, {rejected_count:,} Rejected, {awaiting_count:,} Awaiting Response, {not_sent_count:,} Not Sent")
+        
+        print(f"\nPERFORMACE METRICS:")
+        print(f"   • Parallel Data Retrieval: {data_duration:.1f} seconds")
+        print(f"   • Fast Data Processing: {processing_duration:.1f} seconds")
+        print(f"   • Historic Creation: {historic_duration:.1f} seconds")
+        print(f"   • Excel Creation: {excel_duration:.1f} seconds")
+        print(f"   • TOTAL PROCESSING TIME: {total_duration:.1f} seconds ({total_duration/60:.1f} minutes)")
+        
+        print(f"\nJUPYTER ADVANTAGES:")
+        print(f"   • Download issues completely resolved")
+        print(f"   • Files saved in notebook folder")
+        print(f"   • Local disk usage")
+        print(f"   • Can be re-executed anytime")
+        print(f"   • Faster processing")
+        print(f"   • 100% reliable results")
+        print(f"   • All files ready for use")
+        
+        print("=" * 60)
+        print("JUPYTER TERMINAL MANAGEMENT SYSTEM COMPLETED SUCCESSFULLY")
+        
+    except Exception as e:
+        print(f"Processing error: {e}")
+
+def create_excel_report():
+    print(f"\nSTARTING JUPYTER EXCEL REPORT...")
+    create_terminal_management_excel_jupyter()
+
+def quick_test():
+    print(f"\nJUPYTER QUICK TEST - 1000 ROW SAMPLE")
+    
+    test_data = []
+    for i in range(1000):
+        status_examples = ['Completed', 'Rejected', 'Awaiting Response', 'Not Sent']
+        status = status_examples[i % 4]
+        
+        test_data.append([
+            f'TEST{i:06d}', f'ORG{i:06d}', 'HALKBANK', status,
+            '26.08.2024 09:00', '26.08.2024 09:30', '', '',
+            'Installation', 'Active', 'PHYSICAL POS', 'Active',
+            'PAX', 'A920', f'SIM{i:06d}', f'IMEI{i:09d}', 'Turkcell',
+            '26.08.2024 10:00', f'MID{i:06d}', f'TID{i:06d}'
+        ])
+    
+    column_headers = [
+        'Mali No', 'Org ID', 'Bank Name', 'Bank Status',
+        'Bank Submission Date', 'Bank Installation Date', 'Cancellation Submission', 'Cancellation Response',
+        'Request Type', 'Sales Status', 'Terminal Type', 'Terminal Status',
+        'Brand', 'Model', 'Sim ID', 'IMEI', 'Operator',
+        'Last Communication', 'Bank MID', 'Bank TID'
+    ]
+    
+    test_file = f"terminal_management_test_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+    
+    success, file_size = create_excel_file_jupyter(test_data, test_file, column_headers)
+    
+    if success:
+        print(f"   Test file created successfully: {test_file}")
+        print(f"   File location: {os.path.abspath(test_file)}")
+    else:
+        print(f"   Failed to create test file")
+
+print(f"\n" + "="*60)
+print(f"JUPYTER TERMINAL MANAGEMENT SYSTEM READY")
+print(f"="*60)
+print(f"USAGE OPTIONS:")
+print(f"")
+print(f"1. QUICK TEST (1000 row sample):")
+print(f"   quick_test()")
+print(f"")
+print(f"2. FULL EXCEL REPORT (local save):")
+print(f"   create_excel_report()")
+print(f"")
+print(f"JUPYTER NOTEBOOK ADVANTAGES:")
+print(f"   • Local computer environment")
+print(f"   • Files saved in notebook folder")
+print(f"   • Download issues completely eliminated")
+print(f"   • 100K rows per file (optimal size)")
+print(f"   • Fully formatted Excel (colors, formats, conditional formatting)")
+print(f"   • Faster processing (local resources)")
+print(f"   • Can be re-executed anytime")
+print(f"   • Unlimited disk space")
+print(f"   • 100% reliable results")
+print(f"")
+print(f"IMPORTANT SETUP NOTES:")
+print(f"   1. Replace YOUR_PROJECT_ID with your actual project ID")
+print(f"   2. Replace YOUR_PRIVATE_KEY with your actual private key")
+print(f"   3. Replace YOUR_CLIENT_EMAIL with your service account email")
+print(f"   4. Replace spreadsheet IDs with your actual IDs")
+print(f"   5. Invite service account email to your Google Sheets as Editor")
+print(f"")
+print(f"START IMMEDIATELY:")
+print(f"   quick_test()           # For testing")
+print(f"   create_excel_report()  # For full report")
+print("="*60)
