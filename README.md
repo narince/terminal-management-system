@@ -1,212 +1,139 @@
-# Terminal Management System - Usage Guide
+# Data Management System - Complete Usage Guide
 
-## 📋 **Quick Setup Guide**
+## 📋 **System Overview**
 
-### **Step 1: Install Required Libraries**
-```bash
-pip install gspread pandas openpyxl xlsxwriter google-auth
-```
+This system is designed to consolidate and process data from multiple Google Sheets sources into comprehensive Excel reports. It handles large datasets efficiently and provides detailed analysis with customizable formatting.
 
-### **Step 2: Configure Your Credentials**
-Replace the following placeholders in the code:
+### **Key Features:**
+- **Multi-source data integration** from Google Sheets
+- **Large dataset processing** (millions of records)
+- **Automated Excel generation** with professional formatting
+- **Parallel data retrieval** for optimal performance
+- **Customizable data mappings** and transformations
+- **Local file storage** eliminating download issues
 
+## 🔧 **Required Configuration**
+
+### **1. Service Account Setup**
 ```python
-# REPLACE THESE VALUES WITH YOUR OWN:
+# REQUIRED: Replace these values with your Google Cloud credentials
 service_account_info = {
     "project_id": "YOUR_PROJECT_ID",           # Your Google Cloud Project ID
     "private_key": "YOUR_PRIVATE_KEY",         # Your Service Account Private Key
-    "client_email": "YOUR_CLIENT_EMAIL",       # Your Service Account Email
-    # ... other fields
+    "client_email": "YOUR_SERVICE_ACCOUNT",    # Your Service Account Email
+    # ... other credentials
 }
-
-# REPLACE THESE SPREADSHEET IDs:
-SOURCE_ID = "YOUR_MAIN_SPREADSHEET_ID"         # Main system spreadsheet
-TERMINAL_ID = "YOUR_TERMINAL_SPREADSHEET_ID"   # Terminal data spreadsheet  
-VPOS_ID = "YOUR_VPOS_SPREADSHEET_ID"          # VPOS data spreadsheet
 ```
 
-### **Step 3: Grant Permissions**
-Add your service account email to all Google Sheets as **Editor**:
-- Main spreadsheet
-- Terminal spreadsheet
-- VPOS spreadsheet
-
----
-
-## 🔧 **Configurable Settings**
-
-### **1. Bank Configuration**
+### **2. Data Source Configuration**
 ```python
-# Modify these lists to add/remove banks:
-BANKS = ['HALKBANK', 'ANADOLUBANK', 'VAKIFBANK', 'DENIZBANK', 'AKBANK']
-VPOS_BANKS = ['ISBANK', 'QNB', 'TFKB', 'DENIZBANK', 'VAKIFBANK', 'AKBANK', 'HALKBANK']
+# REQUIRED: Replace with your Google Sheets IDs
+GOOGLESHEET1_ID = "YOUR_MAIN_SPREADSHEET_ID"      # Primary data source
+GOOGLESHEET2_ID = "YOUR_SECONDARY_SPREADSHEET_ID" # Secondary data source  
+GOOGLESHEET3_ID = "YOUR_THIRD_SPREADSHEET_ID"     # Third data source
+
+# REQUIRED: Replace with your actual sheet tab names
+"MainData"        # Replace with your main data sheet name
+"Submissions"     # Replace with your submissions sheet name
+"Cancellations"   # Replace with your cancellations sheet name
 ```
 
-### **2. File Size Settings**
+### **3. Data Mapping Configuration**
 ```python
-# Change rows per Excel file:
-CHUNK_SIZE = 100000  # Current: 100K rows per file
-# Options: 50000 (50K), 150000 (150K), 200000 (200K)
+# OPTIONAL: Customize data source names
+DATA_SOURCES = ['DATA1', 'DATA2', 'DATA3', 'DATA4', 'DATA5']
+SECONDARY_SOURCES = ['SOURCE1', 'SOURCE2', 'SOURCE3', ...]
+
+# REQUIRED: Adjust column mappings to match your data structure
+DATA_SUBMISSION_SCHEMA = {
+    'DATA1': {'key': 0, 'cols': [1, 2, 3, 4]},  # Adjust column indices
+    # ... configure for each data source
+}
 ```
 
-### **3. Output File Naming**
+## 🎯 **What This System Does**
+
+### **1. Data Integration**
+- **Connects to multiple Google Sheets** simultaneously
+- **Retrieves data in parallel** for faster processing
+- **Handles different data structures** from various sources
+- **Combines related records** across multiple sheets
+
+### **2. Data Processing**
+- **Normalizes data formats** across different sources
+- **Converts status values** to standardized terminology
+- **Merges related records** based on unique identifiers
+- **Applies business rules** for data classification
+
+### **3. Excel Generation**
+- **Creates multiple Excel files** (100K rows each)
+- **Applies professional formatting** with colors and styles
+- **Includes conditional formatting** for visual data analysis
+- **Provides comprehensive data analysis** with statistics
+
+### **4. Business Logic Processing**
+- **Request Type Classification:** Installation vs Deletion
+- **Status Processing:** Maps various status values to standard categories
+- **Date/Time Handling:** Combines and formats date/time data
+- **Cross-reference Validation:** Verifies data consistency across sources
+
+## 📊 **Customizable Elements**
+
+### **1. Data Sources**
 ```python
-# Modify file naming pattern:
-excel_file_name = f"terminal_management_system{file_number:02d}_{timestamp}.xlsx"
-# Change to: f"custom_report_{file_number:02d}_{timestamp}.xlsx"
+# Modify according to your organization's data sources
+DATA_SOURCES = ['DEPT_A', 'DEPT_B', 'SYSTEM_X', 'PLATFORM_Y']
 ```
 
-### **4. Column Headers**
+### **2. Status Mappings**
 ```python
-# Customize Excel column names:
+# Customize status conversion logic
+def convert_data_status(value):
+    if 'approved' in value_str:
+        return 'Completed'
+    elif 'denied' in value_str:
+        return 'Rejected'
+    # Add your specific status mappings
+```
+
+### **3. Column Structure**
+```python
+# Adjust column headers for your Excel output
 column_headers = [
-    'Mali No', 'Org ID', 'Bank Name', 'Bank Status',
-    # Add/modify column names as needed
+    'Unique_ID', 'Department', 'System_Name', 'Current_Status',
+    'Created_Date', 'Updated_Date', 'Notes', 'Priority',
+    # Customize according to your requirements
 ]
 ```
 
----
+### **4. File Output**
+```python
+# Customize file naming and size
+CHUNK_SIZE = 75000  # Rows per file
+excel_file_name = f"monthly_report_{file_number:02d}_{timestamp}.xlsx"
+```
 
-## 🎯 **Usage Examples**
+## 🚀 **Usage Instructions**
 
 ### **Basic Usage:**
 ```python
-# Run quick test (1000 rows)
+# Test the system with sample data
 quick_test()
 
-# Generate full report
+# Generate complete reports from your data
 create_excel_report()
 ```
 
-### **Advanced Usage:**
-```python
-# Custom chunk size
-CHUNK_SIZE = 50000  # 50K rows per file
-create_excel_report()
+### **Advanced Configuration:**
+1. **Modify data source names** to match your organization
+2. **Adjust column mappings** to fit your spreadsheet structure  
+3. **Customize status conversions** for your business logic
+4. **Set appropriate file sizes** based on your requirements
 
-# Different timestamp format
-timestamp = datetime.now().strftime("%Y_%m_%d")
-```
+### **Prerequisites:**
+1. **Google Cloud Project** with Sheets API enabled
+2. **Service Account** with appropriate permissions
+3. **Google Sheets access** for the service account
+4. **Python environment** with required libraries
 
----
-
-## 📊 **Data Processing Rules**
-
-### **1. Sales Status Conversion:**
-- `evet` (yes) → `Passive`
-- `hayir` (no) → `Active`
-
-### **2. Bank Status Conversion:**
-- `var` → `Completed`
-- `red` → `Rejected`
-- `banka bekleniyor` → `Awaiting Response`
-- `yok` or empty → `Not Sent`
-
-### **3. Terminal Type Classification:**
-- Main DB records → `PHYSICAL POS`
-- VPOS DB records → `CEPTEPOS`
-
-### **4. Request Type Logic:**
-- Has cancellation data → `Deletion`
-- No cancellation data → `Installation`
-
----
-
-## 🔄 **Customization Options**
-
-### **1. Add New Status Categories:**
-```python
-def convert_bank_status(value):
-    # Add new status mappings:
-    if 'new_status' in value_str:
-        return 'New Category'
-    # ... existing code
-```
-
-### **2. Modify Color Schemes:**
-```python
-# Change Excel conditional formatting colors:
-worksheet.conditional_format(f'D2:D{row_count + 1}', {
-    'type': 'text', 'criteria': 'containing', 'value': 'Completed',
-    'format': workbook.add_format({'bg_color': '#YOUR_COLOR'})  # Change color
-})
-```
-
-### **3. Add New Data Sources:**
-```python
-# Add new spreadsheet:
-NEW_SPREADSHEET_ID = "YOUR_NEW_SHEET_ID"
-new_workbook = gs_client.open_by_key(NEW_SPREADSHEET_ID)
-
-# Add to parallel processing:
-executor.submit(fetch_sheet_data, new_workbook, "Sheet_Name"): "NEW_DATA"
-```
-
-### **4. Filter Data:**
-```python
-# Add data filtering before processing:
-if mali_no.startswith('FILTER_PREFIX'):
-    # Process only specific mali numbers
-    continue
-```
-
----
-
-## 📁 **Output File Structure**
-
-### **File Naming Convention:**
-```
-terminal_management_system01_20241202_1430.xlsx
-terminal_management_system02_20241202_1430.xlsx
-...
-```
-
-### **Excel Sheet Structure:**
-- **Sheet Name:** Terminal Management
-- **Columns:** 20 columns (Mali No to Bank TID)
-- **Formatting:** Headers, colors, conditional formatting
-- **Features:** Frozen panes, auto-width columns
-
----
-
-## ⚠️ **Important Notes**
-
-### **1. Service Account Setup:**
-1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-2. Create Service Account
-3. Download JSON key
-4. Replace credentials in code
-5. Enable Google Sheets API and Google Drive API
-
-### **2. Permissions:**
-- Add service account email to ALL Google Sheets as **Editor**
-- Ensure sheets are accessible by the service account
-
-### **3. Error Handling:**
-- Check internet connection for Google Sheets access
-- Verify spreadsheet IDs are correct
-- Ensure sufficient disk space for output files
-
-### **4. Performance:**
-- Processing time depends on data size
-- Large datasets may take 15-30 minutes
-- Monitor memory usage for very large files
-
----
-
-## 🚀 **Quick Start Commands**
-
-```python
-# 1. Test the system
-quick_test()
-
-# 2. Generate full report  
-create_excel_report()
-
-# 3. Check output files
-import os
-files = [f for f in os.listdir('.') if f.startswith('terminal_management')]
-print(f"Generated {len(files)} files")
-```
-
-This system provides a complete terminal management reporting solution with full customization capabilities for enterprise use.
+This system provides a robust foundation for enterprise data management and reporting, with full customization capabilities to adapt to any organizational structure or data format.
