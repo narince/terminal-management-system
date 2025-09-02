@@ -1,12 +1,12 @@
-# TERMINAL MANAGEMENT SYSTEM - JUPYTER NOTEBOOK VERSION
-print("TERMINAL MANAGEMENT SYSTEM - JUPYTER NOTEBOOK VERSION")
+# DATA MANAGEMENT SYSTEM - JUPYTER NOTEBOOK VERSION
+print("DATA MANAGEMENT SYSTEM - JUPYTER NOTEBOOK VERSION")
 print("=" * 60)
-print("Data processing system for large datasets")
+print("Enterprise data processing system for large datasets")
 print("Local Jupyter Notebook environment")
-print("Terminal Types: PHYSICAL POS & CEPTEPOS")
-print("Sales Status: Yes->Passive, No->Active")
-print("Bank Status: VAR->Completed, Red->Rejected, YOK->Not Sent")
-print("File format: terminal_management_system01, 02, 03...")
+print("Record Types: TYPE_A & TYPE_B")
+print("Status Processing: Option1->Status1, Option2->Status2")
+print("Processing Status: Value1->Completed, Value2->Rejected, Value3->Not Sent")
+print("File format: data_management_system01, 02, 03...")
 print("Storage location: Jupyter notebook folder")
 print("Excel size: 100K rows per file")
 print("Solution: Download issues completely resolved")
@@ -34,20 +34,20 @@ except Exception as e:
 
 print("\n2. Google Sheets authentication...")
 try:
-    # IMPORTANT: Replace with your own Service Account JSON credentials
+    # USER CONFIGURATION REQUIRED: Replace with your own Service Account JSON credentials
     # Get your credentials from: https://console.cloud.google.com/apis/credentials
     # Create Service Account -> Download JSON key -> Replace the content below
     service_account_info = {
         "type": "service_account",
-        "project_id": "YOUR_PROJECT_ID",  # REPLACE WITH YOUR PROJECT ID
-        "private_key_id": "YOUR_PRIVATE_KEY_ID",  # REPLACE WITH YOUR PRIVATE KEY ID
-        "private_key": "-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----\n",  # REPLACE WITH YOUR PRIVATE KEY
-        "client_email": "YOUR_SERVICE_ACCOUNT_EMAIL@YOUR_PROJECT.iam.gserviceaccount.com",  # REPLACE WITH YOUR CLIENT EMAIL
-        "client_id": "YOUR_CLIENT_ID",  # REPLACE WITH YOUR CLIENT ID
+        "project_id": "YOUR_PROJECT_ID",           # USER CONFIG: Replace with your Google Cloud Project ID
+        "private_key_id": "YOUR_PRIVATE_KEY_ID",   # USER CONFIG: Replace with your Private Key ID
+        "private_key": "-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_CONTENT_HERE\n-----END PRIVATE KEY-----\n",  # USER CONFIG: Replace with your Private Key
+        "client_email": "YOUR_SERVICE_ACCOUNT@YOUR_PROJECT.iam.gserviceaccount.com",  # USER CONFIG: Replace with your Service Account Email
+        "client_id": "YOUR_CLIENT_ID",             # USER CONFIG: Replace with your Client ID
         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
         "token_uri": "https://oauth2.googleapis.com/token",
         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-        "client_x509_cert_url": "YOUR_CERT_URL",  # REPLACE WITH YOUR CERT URL
+        "client_x509_cert_url": "YOUR_CERT_URL",   # USER CONFIG: Replace with your Certificate URL
         "universe_domain": "googleapis.com"
     }
     
@@ -70,15 +70,15 @@ except Exception as e:
     raise
 
 print("\n3. Connecting to source files...")
-# IMPORTANT: Replace with your Google Sheets IDs
-SOURCE_ID = "YOUR_MAIN_SPREADSHEET_ID"  # REPLACE WITH YOUR MAIN SPREADSHEET ID
-TERMINAL_ID = "YOUR_TERMINAL_SPREADSHEET_ID"  # REPLACE WITH YOUR TERMINAL SPREADSHEET ID
-VPOS_ID = "YOUR_VPOS_SPREADSHEET_ID"  # REPLACE WITH YOUR VPOS SPREADSHEET ID
+# USER CONFIGURATION REQUIRED: Replace with your Google Sheets IDs
+GOOGLESHEET1_ID = "YOUR_MAIN_SPREADSHEET_ID"      # USER CONFIG: Replace with your main data spreadsheet ID
+GOOGLESHEET2_ID = "YOUR_SECONDARY_SPREADSHEET_ID" # USER CONFIG: Replace with your secondary data spreadsheet ID
+GOOGLESHEET3_ID = "YOUR_THIRD_SPREADSHEET_ID"     # USER CONFIG: Replace with your third data spreadsheet ID
 
 try:
-    main_workbook = gs_client.open_by_key(SOURCE_ID)
-    terminal_workbook = gs_client.open_by_key(TERMINAL_ID)
-    vpos_workbook = gs_client.open_by_key(VPOS_ID)
+    main_workbook = gs_client.open_by_key(GOOGLESHEET1_ID)
+    secondary_workbook = gs_client.open_by_key(GOOGLESHEET2_ID)
+    third_workbook = gs_client.open_by_key(GOOGLESHEET3_ID)
     print("   All Google Sheets files opened successfully")
 except Exception as e:
     print(f"   File opening error: {e}")
@@ -88,66 +88,72 @@ except Exception as e:
     raise
 
 print("\n4. System configuration...")
-BANKS = ['HALKBANK', 'ANADOLUBANK', 'VAKIFBANK', 'DENIZBANK', 'AKBANK']
-VPOS_BANKS = ['ISBANK', 'QNB', 'TFKB', 'DENIZBANK', 'VAKIFBANK', 'AKBANK', 'HALKBANK']
+# USER CONFIGURATION: Modify these data source names according to your needs
+DATA_SOURCES = ['DATA1', 'DATA2', 'DATA3', 'DATA4', 'DATA5']
+SECONDARY_SOURCES = ['SOURCE1', 'SOURCE2', 'SOURCE3', 'SOURCE4', 'SOURCE5', 'SOURCE6', 'SOURCE7']
 
-BANK_SUBMISSION_SCHEMA = {
-    'HALKBANK':    {'key': 0,  'cols': [1, 2, 3, 4]},
-    'ANADOLUBANK': {'key': 6,  'cols': [7, 8, 9, 10]},
-    'VAKIFBANK':   {'key': 12, 'cols': [13, 14, 15, 16]},
-    'DENIZBANK':   {'key': 18, 'cols': [19, 20, 21, 22]},
-    'AKBANK':      {'key': 24, 'cols': [25, 26, 27, 28]}
+# USER CONFIGURATION: Modify column mappings according to your spreadsheet structure
+DATA_SUBMISSION_SCHEMA = {
+    'DATA1': {'key': 0,  'cols': [1, 2, 3, 4]},
+    'DATA2': {'key': 6,  'cols': [7, 8, 9, 10]},
+    'DATA3': {'key': 12, 'cols': [13, 14, 15, 16]},
+    'DATA4': {'key': 18, 'cols': [19, 20, 21, 22]},
+    'DATA5': {'key': 24, 'cols': [25, 26, 27, 28]}
 }
 
 CANCELLATION_SCHEMA = {
-    'HALKBANK':    {'key': 0,  'cols': [1, 2, 3, 4]},
-    'ANADOLUBANK': {'key': 6,  'cols': [7, 8, 9, 10]},
-    'DENIZBANK':   {'key': 12, 'cols': [13, 14, 15, 16]},
-    'VAKIFBANK':   {'key': 18, 'cols': [19, 20, 21, 22]},
-    'AKBANK':      {'key': 24, 'cols': [25, 26, 27, 28]}
+    'DATA1': {'key': 0,  'cols': [1, 2, 3, 4]},
+    'DATA2': {'key': 6,  'cols': [7, 8, 9, 10]},
+    'DATA4': {'key': 12, 'cols': [13, 14, 15, 16]},
+    'DATA3': {'key': 18, 'cols': [19, 20, 21, 22]},
+    'DATA5': {'key': 24, 'cols': [25, 26, 27, 28]}
 }
 
-VPOS_DEFINE_SCHEMA = {
-    'HALKBANK': {'key': 0, 'submission': 1, 'response': 2},
-    'TFKB':     {'key': 4, 'submission': 5, 'response': 6},
-    'DENIZBANK':{'key': 8, 'submission': 9, 'response': 10},
-    'VAKIFBANK':{'key': 12, 'submission': 13, 'response': 14},
-    'AKBANK':   {'key': 16, 'submission': 17, 'response': 18},
-    'ISBANK':   {'key': 20, 'submission': 21, 'response': 22},
-    'QNB':      {'key': 24, 'submission': 25, 'response': 26}
+SECONDARY_DEFINE_SCHEMA = {
+    'DATA1': {'key': 0, 'submission': 1, 'response': 2},
+    'SOURCE3': {'key': 4, 'submission': 5, 'response': 6},
+    'DATA4': {'key': 8, 'submission': 9, 'response': 10},
+    'DATA3': {'key': 12, 'submission': 13, 'response': 14},
+    'DATA5': {'key': 16, 'submission': 17, 'response': 18},
+    'SOURCE1': {'key': 20, 'submission': 21, 'response': 22},
+    'SOURCE2': {'key': 24, 'submission': 25, 'response': 26}
 }
 
 def clean_key(value):
+    """Clean and normalize key values"""
     return str(value or '').strip().upper()
 
 def clean_text(value):
+    """Clean and normalize text values"""
     return str(value or '').strip()
 
 def convert_sales_status(value):
+    """Convert sales status values - USER CONFIG: Modify according to your data"""
     value_str = clean_text(value).lower()
-    if value_str == 'evet':
-        return 'Passive'
-    elif value_str == 'hayir' or value_str == 'hayir':
-        return 'Active'
+    if value_str == 'option_a':  # USER CONFIG: Replace 'option_a' with your actual value
+        return 'Status1'
+    elif value_str == 'option_b':  # USER CONFIG: Replace 'option_b' with your actual value
+        return 'Status2'
     else:
         return clean_text(value) if value else ''
 
-def convert_bank_status(value):
-    """Convert bank status values"""
+def convert_data_status(value):
+    """Convert data status values - USER CONFIG: Modify according to your data"""
     value_str = clean_text(value).lower()
     
-    if 'var' in value_str:
+    if 'value1' in value_str:  # USER CONFIG: Replace 'value1' with your actual status value
         return 'Completed'
-    elif 'red' in value_str:
+    elif 'value2' in value_str:  # USER CONFIG: Replace 'value2' with your actual status value
         return 'Rejected'
-    elif 'banka bekleniyor' in value_str or 'tanimlama bekleniyor' in value_str:
+    elif 'value3' in value_str or 'value4' in value_str:  # USER CONFIG: Replace with your waiting status values
         return 'Awaiting Response'
-    elif 'yok' in value_str or value_str == '' or not value_str:
+    elif 'value5' in value_str or value_str == '' or not value_str:  # USER CONFIG: Replace with your not sent values
         return 'Not Sent'
     else:
         return clean_text(value) if value else 'Not Sent'
 
 def determine_request_type(cancellation_submission, cancellation_response):
+    """Determine request type based on cancellation data"""
     cancellation_submission_str = clean_text(cancellation_submission)
     cancellation_response_str = clean_text(cancellation_response)
     
@@ -157,6 +163,7 @@ def determine_request_type(cancellation_submission, cancellation_response):
         return 'Installation'
 
 def combine_date_time(date, time):
+    """Combine date and time values into single string"""
     if not date and not time:
         return ''
     
@@ -170,7 +177,8 @@ def combine_date_time(date, time):
     
     return ''
 
-def format_vpos_date(date_str):
+def format_secondary_date(date_str):
+    """Format secondary date values"""
     return clean_text(date_str)
 
 def create_excel_file_jupyter(chunk_data, file_name, column_headers):
@@ -184,10 +192,10 @@ def create_excel_file_jupyter(chunk_data, file_name, column_headers):
         
         # Write Excel file
         with pd.ExcelWriter(file_name, engine='xlsxwriter') as writer:
-            chunk_df.to_excel(writer, sheet_name='Terminal Management', index=False)
+            chunk_df.to_excel(writer, sheet_name='Data Management', index=False)
             
             workbook = writer.book
-            worksheet = writer.sheets['Terminal Management']
+            worksheet = writer.sheets['Data Management']
             
             # Header format
             header_format = workbook.add_format({
@@ -204,7 +212,7 @@ def create_excel_file_jupyter(chunk_data, file_name, column_headers):
             for col_no, header in enumerate(column_headers):
                 worksheet.write(0, col_no, header, header_format)
             
-            # Column widths
+            # USER CONFIG: Modify column widths according to your data
             column_widths = [15, 12, 12, 18, 20, 20, 20, 20, 12, 15, 15, 15, 12, 12, 15, 15, 12, 15, 15, 15]
             for i, width in enumerate(column_widths):
                 worksheet.set_column(i, i, width)
@@ -212,11 +220,11 @@ def create_excel_file_jupyter(chunk_data, file_name, column_headers):
             # Freeze panes
             worksheet.freeze_panes(1, 0)
             
-            # Conditional formatting
+            # Conditional formatting - USER CONFIG: Modify colors and conditions
             row_count = len(chunk_df)
             
             if row_count > 0:
-                # Bank Status coloring
+                # Status coloring
                 worksheet.conditional_format(f'D2:D{row_count + 1}', {
                     'type': 'text', 'criteria': 'containing', 'value': 'Completed',
                     'format': workbook.add_format({'bg_color': '#C8E6C9'})
@@ -246,21 +254,21 @@ def create_excel_file_jupyter(chunk_data, file_name, column_headers):
                 
                 # Sales Status coloring
                 worksheet.conditional_format(f'J2:J{row_count + 1}', {
-                    'type': 'text', 'criteria': 'containing', 'value': 'Active',
+                    'type': 'text', 'criteria': 'containing', 'value': 'Status2',
                     'format': workbook.add_format({'bg_color': '#C8E6C9'})
                 })
                 worksheet.conditional_format(f'J2:J{row_count + 1}', {
-                    'type': 'text', 'criteria': 'containing', 'value': 'Passive',
+                    'type': 'text', 'criteria': 'containing', 'value': 'Status1',
                     'format': workbook.add_format({'bg_color': '#FFCDD2'})
                 })
                 
-                # Terminal Type coloring
+                # Type classification coloring
                 worksheet.conditional_format(f'K2:K{row_count + 1}', {
-                    'type': 'text', 'criteria': 'containing', 'value': 'PHYSICAL POS',
+                    'type': 'text', 'criteria': 'containing', 'value': 'TYPE_A',
                     'format': workbook.add_format({'bg_color': '#F3E5F5'})
                 })
                 worksheet.conditional_format(f'K2:K{row_count + 1}', {
-                    'type': 'text', 'criteria': 'containing', 'value': 'CEPTEPOS',
+                    'type': 'text', 'criteria': 'containing', 'value': 'TYPE_B',
                     'format': workbook.add_format({'bg_color': '#E1F5FE'})
                 })
         
@@ -277,8 +285,9 @@ def create_excel_file_jupyter(chunk_data, file_name, column_headers):
 
 print("   Configuration completed successfully")
 
-def create_terminal_management_excel_jupyter():
-    print(f"\nSTARTING JUPYTER TERMINAL MANAGEMENT EXCEL REPORT...")
+def create_data_management_excel_jupyter():
+    """Main function to create comprehensive data management Excel reports"""
+    print(f"\nSTARTING JUPYTER DATA MANAGEMENT EXCEL REPORT...")
     print(f"Date: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}")
     print(f"Output: Local Excel files (100K rows per file)")
     print(f"Platform: Jupyter Notebook")
@@ -290,6 +299,7 @@ def create_terminal_management_excel_jupyter():
         data_start = time.time()
         
         def fetch_sheet_data(workbook, sheet_name):
+            """Fetch data from Google Sheets worksheet"""
             try:
                 worksheet = workbook.worksheet(sheet_name)
                 return sheet_name, worksheet.get_all_values()
@@ -297,15 +307,16 @@ def create_terminal_management_excel_jupyter():
                 print(f"   Warning - {sheet_name} error: {e}")
                 return sheet_name, []
         
+        # USER CONFIG: Modify sheet names according to your Google Sheets structure
         with concurrent.futures.ThreadPoolExecutor(max_workers=7) as executor:
             tasks = {
-                executor.submit(fetch_sheet_data, main_workbook, "DB"): "DB",
-                executor.submit(fetch_sheet_data, main_workbook, "Banka Gönderimleri"): "BG",
-                executor.submit(fetch_sheet_data, main_workbook, "İptal Gönderimleri"): "IG",
-                executor.submit(fetch_sheet_data, terminal_workbook, "DB"): "TERMINAL",
-                executor.submit(fetch_sheet_data, main_workbook, "DB"): "PHYSICAL_POS",
-                executor.submit(fetch_sheet_data, vpos_workbook, "DB"): "VPOS_DB",
-                executor.submit(fetch_sheet_data, vpos_workbook, "Tanımla Gönderim"): "VPOS_DEFINE"
+                executor.submit(fetch_sheet_data, main_workbook, "MainData"): "DB",                    # USER CONFIG: Replace "MainData" with your sheet name
+                executor.submit(fetch_sheet_data, main_workbook, "Submissions"): "BG",                # USER CONFIG: Replace "Submissions" with your sheet name
+                executor.submit(fetch_sheet_data, main_workbook, "Cancellations"): "IG",              # USER CONFIG: Replace "Cancellations" with your sheet name
+                executor.submit(fetch_sheet_data, secondary_workbook, "DeviceData"): "SECONDARY",     # USER CONFIG: Replace "DeviceData" with your sheet name
+                executor.submit(fetch_sheet_data, main_workbook, "MainData"): "TYPE_A_DATA",          # USER CONFIG: Replace with your TYPE_A data sheet name
+                executor.submit(fetch_sheet_data, third_workbook, "TypeBData"): "TYPE_B_DB",          # USER CONFIG: Replace "TypeBData" with your sheet name
+                executor.submit(fetch_sheet_data, third_workbook, "TypeBSubmissions"): "TYPE_B_DEFINE" # USER CONFIG: Replace "TypeBSubmissions" with your sheet name
             }
             
             raw_data = {}
@@ -322,102 +333,105 @@ def create_terminal_management_excel_jupyter():
         print("\n6. Fast data processing...")
         processing_start = time.time()
         
-        # Process main DB data
-        print("   Processing main DB data...")
+        # Process main database data
+        print("   Processing main database data...")
         db_mapping = {}
         if len(raw_data['DB']) > 1:
             for row in raw_data['DB'][1:]:
                 if len(row) >= 11:
-                    mali_no = clean_key(row[3])
-                    if mali_no:
-                        db_mapping[mali_no] = {
-                            'orgId': clean_text(row[4]),
-                            'DENIZBANK': convert_bank_status(row[6]) if len(row) > 6 else 'Not Sent',
-                            'VAKIFBANK': convert_bank_status(row[7]) if len(row) > 7 else 'Not Sent',
-                            'AKBANK': convert_bank_status(row[8]) if len(row) > 8 else 'Not Sent',
-                            'HALKBANK': convert_bank_status(row[9]) if len(row) > 9 else 'Not Sent',
-                            'ANADOLUBANK': convert_bank_status(row[10]) if len(row) > 10 else 'Not Sent'
+                    # USER CONFIG: Modify column indices according to your data structure
+                    record_id = clean_key(row[3])  # Column D (index 3) - modify as needed
+                    if record_id:
+                        db_mapping[record_id] = {
+                            'orgId': clean_text(row[4]),  # Column E (index 4) - modify as needed
+                            'DATA4': convert_data_status(row[6]) if len(row) > 6 else 'Not Sent',  # Column G - modify as needed
+                            'DATA3': convert_data_status(row[7]) if len(row) > 7 else 'Not Sent',  # Column H - modify as needed
+                            'DATA5': convert_data_status(row[8]) if len(row) > 8 else 'Not Sent',  # Column I - modify as needed
+                            'DATA1': convert_data_status(row[9]) if len(row) > 9 else 'Not Sent',  # Column J - modify as needed
+                            'DATA2': convert_data_status(row[10]) if len(row) > 10 else 'Not Sent' # Column K - modify as needed
                         }
-        print(f"      {len(db_mapping):,} main DB records processed")
+        print(f"      {len(db_mapping):,} main database records processed")
         
-        # Process VPOS DB data
-        print("   Processing VPOS DB data...")
-        vpos_db_mapping = {}
-        if len(raw_data['VPOS_DB']) > 1:
-            for row in raw_data['VPOS_DB'][1:]:
+        # Process secondary database data
+        print("   Processing secondary database data...")
+        secondary_db_mapping = {}
+        if len(raw_data['TYPE_B_DB']) > 1:
+            for row in raw_data['TYPE_B_DB'][1:]:
                 if len(row) >= 13:
-                    mali_no = clean_key(row[4])
-                    if mali_no:
-                        vpos_db_mapping[mali_no] = {
-                            'orgId': clean_text(row[1]),
-                            'ISBANK': convert_bank_status(row[6]),
-                            'QNB': convert_bank_status(row[7]),
-                            'TFKB': convert_bank_status(row[8]),
-                            'DENIZBANK': convert_bank_status(row[9]),
-                            'VAKIFBANK': convert_bank_status(row[10]),
-                            'AKBANK': convert_bank_status(row[11]),
-                            'HALKBANK': convert_bank_status(row[12])
+                    # USER CONFIG: Modify column indices according to your secondary data structure
+                    record_id = clean_key(row[4])  # Column E (index 4) - modify as needed
+                    if record_id:
+                        secondary_db_mapping[record_id] = {
+                            'orgId': clean_text(row[1]),  # Column B (index 1) - modify as needed
+                            'SOURCE1': convert_data_status(row[6]),   # Column G - modify as needed
+                            'SOURCE2': convert_data_status(row[7]),   # Column H - modify as needed
+                            'SOURCE3': convert_data_status(row[8]),   # Column I - modify as needed
+                            'DATA4': convert_data_status(row[9]),     # Column J - modify as needed
+                            'DATA3': convert_data_status(row[10]),    # Column K - modify as needed
+                            'DATA5': convert_data_status(row[11]),    # Column L - modify as needed
+                            'DATA1': convert_data_status(row[12])     # Column M - modify as needed
                         }
-        print(f"      {len(vpos_db_mapping):,} VPOS DB records processed")
+        print(f"      {len(secondary_db_mapping):,} secondary database records processed")
         
-        # Process VPOS Define submissions
-        print("   Processing VPOS Define submissions...")
-        vpos_define_mapping = {bank: {} for bank in VPOS_BANKS}
-        if len(raw_data['VPOS_DEFINE']) > 1:
-            for row in raw_data['VPOS_DEFINE'][1:]:
+        # Process secondary define submissions
+        print("   Processing secondary define submissions...")
+        secondary_define_mapping = {source: {} for source in SECONDARY_SOURCES}
+        if len(raw_data['TYPE_B_DEFINE']) > 1:
+            for row in raw_data['TYPE_B_DEFINE'][1:]:
                 if len(row) >= 27:
-                    for bank_name in VPOS_BANKS:
-                        schema = VPOS_DEFINE_SCHEMA[bank_name]
+                    for source_name in SECONDARY_SOURCES:
+                        schema = SECONDARY_DEFINE_SCHEMA[source_name]
                         key_column = schema['key']
                         submission_column = schema['submission']
                         response_column = schema['response']
                         
                         if key_column < len(row):
-                            mali_no = clean_key(row[key_column])
-                            if mali_no:
-                                submission = format_vpos_date(row[submission_column]) if submission_column < len(row) else ''
-                                response = format_vpos_date(row[response_column]) if response_column < len(row) else ''
+                            record_id = clean_key(row[key_column])
+                            if record_id:
+                                submission = format_secondary_date(row[submission_column]) if submission_column < len(row) else ''
+                                response = format_secondary_date(row[response_column]) if response_column < len(row) else ''
                                 
                                 if submission or response:
-                                    vpos_define_mapping[bank_name][mali_no] = {
+                                    secondary_define_mapping[source_name][record_id] = {
                                         'submission_date': submission,
                                         'response_date': response
                                     }
         
-        vpos_define_total = sum(len(vpos_define_mapping[bank]) for bank in VPOS_BANKS)
-        print(f"      {vpos_define_total:,} VPOS Define submission records processed")
+        secondary_define_total = sum(len(secondary_define_mapping[source]) for source in SECONDARY_SOURCES)
+        print(f"      {secondary_define_total:,} secondary define submission records processed")
         
-        # Process Sales Status (PHYSICAL POS) data
-        print("   Processing Sales Status (PHYSICAL POS) data...")
+        # Process sales status data
+        print("   Processing sales status data...")
         sales_status_mapping = {}
-        if len(raw_data['PHYSICAL_POS']) > 1:
-            for row in raw_data['PHYSICAL_POS'][1:]:
+        if len(raw_data['TYPE_A_DATA']) > 1:
+            for row in raw_data['TYPE_A_DATA'][1:]:
                 if len(row) >= 4:
-                    mali_no = clean_key(row[3])
-                    if mali_no:
-                        sales_status_raw = row[1] if len(row) > 1 else ''
+                    # USER CONFIG: Modify column indices according to your sales data structure
+                    record_id = clean_key(row[3])  # Column D (index 3) - modify as needed
+                    if record_id:
+                        sales_status_raw = row[1] if len(row) > 1 else ''  # Column B (index 1) - modify as needed
                         sales_status_converted = convert_sales_status(sales_status_raw)
-                        sales_status_mapping[mali_no] = {
+                        sales_status_mapping[record_id] = {
                             'sales_status': sales_status_converted,
-                            'terminal_type': 'PHYSICAL POS'
+                            'record_type': 'TYPE_A'
                         }
-        print(f"      {len(sales_status_mapping):,} PHYSICAL POS records processed")
+        print(f"      {len(sales_status_mapping):,} TYPE_A records processed")
         
-        # Process main bank submissions
-        print("   Processing main bank submissions...")
-        bank_mapping = {bank: {} for bank in BANKS}
+        # Process main data submissions
+        print("   Processing main data submissions...")
+        data_mapping = {source: {} for source in DATA_SOURCES}
         if len(raw_data['BG']) > 1:
             for row in raw_data['BG'][1:]:
                 if len(row) >= 29:
-                    for bank_name in BANKS:
-                        schema = BANK_SUBMISSION_SCHEMA[bank_name]
+                    for source_name in DATA_SOURCES:
+                        schema = DATA_SUBMISSION_SCHEMA[source_name]
                         key_column = schema['key']
                         data_columns = schema['cols']
                         
                         if key_column < len(row):
-                            mali_no = clean_key(row[key_column])
-                            if mali_no and any(col < len(row) and row[col] for col in data_columns):
-                                bank_mapping[bank_name][mali_no] = {
+                            record_id = clean_key(row[key_column])
+                            if record_id and any(col < len(row) and row[col] for col in data_columns):
+                                data_mapping[source_name][record_id] = {
                                     'submission_date': combine_date_time(
                                         row[data_columns[0]] if data_columns[0] < len(row) else '',
                                         row[data_columns[1]] if data_columns[1] < len(row) else ''
@@ -428,24 +442,24 @@ def create_terminal_management_excel_jupyter():
                                     )
                                 }
         
-        bank_total = sum(len(bank_mapping[bank]) for bank in BANKS)
-        print(f"      {bank_total:,} main bank submission records processed")
+        data_total = sum(len(data_mapping[source]) for source in DATA_SOURCES)
+        print(f"      {data_total:,} main data submission records processed")
         
         # Process cancellation submissions
         print("   Processing cancellation submissions...")
-        cancellation_mapping = {bank: {} for bank in BANKS}
+        cancellation_mapping = {source: {} for source in DATA_SOURCES}
         if len(raw_data['IG']) > 1:
             for row in raw_data['IG'][1:]:
                 if len(row) >= 29:
-                    for bank_name in BANKS:
-                        schema = CANCELLATION_SCHEMA[bank_name]
+                    for source_name in DATA_SOURCES:
+                        schema = CANCELLATION_SCHEMA[source_name]
                         key_column = schema['key']
                         data_columns = schema['cols']
                         
                         if key_column < len(row):
-                            mali_no = clean_key(row[key_column])
-                            if mali_no and any(col < len(row) and row[col] for col in data_columns):
-                                cancellation_mapping[bank_name][mali_no] = {
+                            record_id = clean_key(row[key_column])
+                            if record_id and any(col < len(row) and row[col] for col in data_columns):
+                                cancellation_mapping[source_name][record_id] = {
                                     'submission_date': combine_date_time(
                                         row[data_columns[0]] if data_columns[0] < len(row) else '',
                                         row[data_columns[1]] if data_columns[1] < len(row) else ''
@@ -456,31 +470,32 @@ def create_terminal_management_excel_jupyter():
                                     )
                                 }
         
-        cancellation_total = sum(len(cancellation_mapping[bank]) for bank in BANKS)
+        cancellation_total = sum(len(cancellation_mapping[source]) for source in DATA_SOURCES)
         print(f"      {cancellation_total:,} cancellation records processed")
         
-        # Process terminal data
-        print("   Processing terminal data...")
-        terminal_mapping = {}
-        if len(raw_data['TERMINAL']) > 1:
-            for row in raw_data['TERMINAL'][1:]:
+        # Process device data
+        print("   Processing device data...")
+        device_mapping = {}
+        if len(raw_data['SECONDARY']) > 1:
+            for row in raw_data['SECONDARY'][1:]:
                 if len(row) >= 11:
-                    mali_no = clean_key(row[0])
-                    bank_name = clean_key(row[8])
-                    if mali_no and bank_name:
-                        combined_key = f"{mali_no}|{bank_name}"
-                        terminal_mapping[combined_key] = {
-                            'brand': clean_text(row[1]),
-                            'model': clean_text(row[2]),
-                            'simId': clean_text(row[3]),
-                            'imei': clean_text(row[4]),
-                            'operator': clean_text(row[5]),
-                            'lastCommunication': clean_text(row[6]),
-                            'terminalStatus': clean_text(row[7]),
-                            'bankMid': clean_text(row[9]) if len(row) > 9 else '',
-                            'bankTid': clean_text(row[10]) if len(row) > 10 else ''
+                    # USER CONFIG: Modify column indices according to your device data structure
+                    record_id = clean_key(row[0])    # Column A (index 0) - modify as needed
+                    source_name = clean_key(row[8])  # Column I (index 8) - modify as needed
+                    if record_id and source_name:
+                        combined_key = f"{record_id}|{source_name}"
+                        device_mapping[combined_key] = {
+                            'brand': clean_text(row[1]),        # Column B - modify as needed
+                            'model': clean_text(row[2]),        # Column C - modify as needed
+                            'deviceId': clean_text(row[3]),     # Column D - modify as needed
+                            'serialNumber': clean_text(row[4]), # Column E - modify as needed
+                            'provider': clean_text(row[5]),     # Column F - modify as needed
+                            'lastContact': clean_text(row[6]),  # Column G - modify as needed
+                            'deviceStatus': clean_text(row[7]), # Column H - modify as needed
+                            'sourceId': clean_text(row[9]) if len(row) > 9 else '',   # Column J - modify as needed
+                            'deviceCode': clean_text(row[10]) if len(row) > 10 else '' # Column K - modify as needed
                         }
-        print(f"      {len(terminal_mapping):,} terminal records processed")
+        print(f"      {len(device_mapping):,} device records processed")
         
         processing_duration = time.time() - processing_start
         print(f"   Data processing duration: {processing_duration:.1f} seconds")
@@ -490,221 +505,149 @@ def create_terminal_management_excel_jupyter():
         
         historic_rows = []
         
-        # Collect all unique mali numbers
-        print("   Identifying unique mali numbers...")
-        all_mali_numbers = set()
+        # Collect all unique record IDs
+        print("   Identifying unique record IDs...")
+        all_record_ids = set()
         
-        # Add mali numbers from main DB
-        for mali_no in db_mapping.keys():
-            all_mali_numbers.add(mali_no)
+        # Add record IDs from main DB
+        for record_id in db_mapping.keys():
+            all_record_ids.add(record_id)
         
-        # Add mali numbers from VPOS DB
-        for mali_no in vpos_db_mapping.keys():
-            all_mali_numbers.add(mali_no)
+        # Add record IDs from secondary DB
+        for record_id in secondary_db_mapping.keys():
+            all_record_ids.add(record_id)
         
-        # Add mali numbers from terminal data
-        for key in terminal_mapping.keys():
-            mali_no = key.split('|')[0]
-            all_mali_numbers.add(mali_no)
+        # Add record IDs from device data
+        for key in device_mapping.keys():
+            record_id = key.split('|')[0]
+            all_record_ids.add(record_id)
         
-        # Add mali numbers from sales status data
-        for mali_no in sales_status_mapping.keys():
-            all_mali_numbers.add(mali_no)
+        # Add record IDs from sales status data
+        for record_id in sales_status_mapping.keys():
+            all_record_ids.add(record_id)
         
-        # Add mali numbers from bank submissions
-        for bank in BANKS:
-            for mali_no in bank_mapping[bank].keys():
-                all_mali_numbers.add(mali_no)
+        # Add record IDs from data submissions
+        for source in DATA_SOURCES:
+            for record_id in data_mapping[source].keys():
+                all_record_ids.add(record_id)
         
-        # Add mali numbers from cancellation submissions
-        for bank in BANKS:
-            for mali_no in cancellation_mapping[bank].keys():
-                all_mali_numbers.add(mali_no)
+        # Add record IDs from cancellation submissions
+        for source in DATA_SOURCES:
+            for record_id in cancellation_mapping[source].keys():
+                all_record_ids.add(record_id)
         
-        # Add mali numbers from VPOS define submissions
-        for bank in VPOS_BANKS:
-            for mali_no in vpos_define_mapping[bank].keys():
-                all_mali_numbers.add(mali_no)
+        # Add record IDs from secondary define submissions
+        for source in SECONDARY_SOURCES:
+            for record_id in secondary_define_mapping[source].keys():
+                all_record_ids.add(record_id)
         
-        all_mali_numbers = sorted(list(all_mali_numbers))
-        print(f"   Total unique mali numbers: {len(all_mali_numbers):,}")
+        all_record_ids = sorted(list(all_record_ids))
+        print(f"   Total unique record IDs: {len(all_record_ids):,}")
         
         # Create historic rows
         print("   Creating historic rows...")
         processed_count = 0
         
-        for mali_no in all_mali_numbers:
-            # Process from main DB for PHYSICAL POS
-            if mali_no in db_mapping:
-                db_record = db_mapping[mali_no]
-                for bank_name in BANKS:
-                    status = db_record.get(bank_name, 'Not Sent')
+        for record_id in all_record_ids:
+            # Process from main DB for TYPE_A
+            if record_id in db_mapping:
+                db_record = db_mapping[record_id]
+                for source_name in DATA_SOURCES:
+                    status = db_record.get(source_name, 'Not Sent')
                     org_id = db_record.get('orgId', '')
                     
-                    bank_record = bank_mapping[bank_name].get(mali_no, {})
-                    cancellation_record = cancellation_mapping[bank_name].get(mali_no, {})
+                    data_record = data_mapping[source_name].get(record_id, {})
+                    cancellation_record = cancellation_mapping[source_name].get(record_id, {})
                     
-                    terminal_key = f"{mali_no}|{bank_name}"
-                    terminal_record = terminal_mapping.get(terminal_key, {})
+                    device_key = f"{record_id}|{source_name}"
+                    device_record = device_mapping.get(device_key, {})
                     
-                    sales_status_record = sales_status_mapping.get(mali_no, {})
+                    sales_status_record = sales_status_mapping.get(record_id, {})
                     
                     cancellation_submission = cancellation_record.get('submission_date', '')
                     cancellation_response = cancellation_record.get('response_date', '')
                     request_type = determine_request_type(cancellation_submission, cancellation_response)
                     
-                    final_terminal_status = terminal_record.get('terminalStatus', '') if terminal_record else ''
-                    final_terminal_type = sales_status_record.get('terminal_type', 'PHYSICAL POS') if sales_status_record else 'PHYSICAL POS'
+                    final_device_status = device_record.get('deviceStatus', '') if device_record else ''
+                    final_record_type = sales_status_record.get('record_type', 'TYPE_A') if sales_status_record else 'TYPE_A'
                     
                     data_exists = (
                         status != 'Not Sent' or
-                        bank_record or
+                        data_record or
                         cancellation_record or
-                        terminal_record or
+                        device_record or
                         sales_status_record or
                         org_id
                     )
                     
                     if data_exists:
                         row = [
-                            mali_no, org_id, bank_name, status,
-                            bank_record.get('submission_date', ''),
-                            bank_record.get('response_date', ''),
+                            record_id, org_id, source_name, status,
+                            data_record.get('submission_date', ''),
+                            data_record.get('response_date', ''),
                             cancellation_record.get('submission_date', ''),
                             cancellation_record.get('response_date', ''),
                             request_type,
                             sales_status_record.get('sales_status', ''),
-                            final_terminal_type, final_terminal_status,
-                            terminal_record.get('brand', '') if terminal_record else '',
-                            terminal_record.get('model', '') if terminal_record else '',
-                            terminal_record.get('simId', '') if terminal_record else '',
-                            terminal_record.get('imei', '') if terminal_record else '',
-                            terminal_record.get('operator', '') if terminal_record else '',
-                            terminal_record.get('lastCommunication', '') if terminal_record else '',
-                            terminal_record.get('bankMid', '') if terminal_record else '',
-                            terminal_record.get('bankTid', '') if terminal_record else ''
+                            final_record_type, final_device_status,
+                            device_record.get('brand', '') if device_record else '',
+                            device_record.get('model', '') if device_record else '',
+                            device_record.get('deviceId', '') if device_record else '',
+                            device_record.get('serialNumber', '') if device_record else '',
+                            device_record.get('provider', '') if device_record else '',
+                            device_record.get('lastContact', '') if device_record else '',
+                            device_record.get('sourceId', '') if device_record else '',
+                            device_record.get('deviceCode', '') if device_record else ''
                         ]
                         historic_rows.append(row)
             
-            # Process from VPOS DB for CEPTEPOS
-            if mali_no in vpos_db_mapping:
-                vpos_record = vpos_db_mapping[mali_no]
-                for bank_name in VPOS_BANKS:
-                    status = vpos_record.get(bank_name, 'Not Sent')
-                    org_id = vpos_record.get('orgId', '')
+            # Process from secondary DB for TYPE_B
+            if record_id in secondary_db_mapping:
+                secondary_record = secondary_db_mapping[record_id]
+                for source_name in SECONDARY_SOURCES:
+                    status = secondary_record.get(source_name, 'Not Sent')
+                    org_id = secondary_record.get('orgId', '')
                     
-                    vpos_define = vpos_define_mapping[bank_name].get(mali_no, {})
-                    terminal_key = f"{mali_no}|{bank_name}"
-                    terminal_record = terminal_mapping.get(terminal_key, {})
-                    sales_status_record = sales_status_mapping.get(mali_no, {})
+                    secondary_define = secondary_define_mapping[source_name].get(record_id, {})
+                    device_key = f"{record_id}|{source_name}"
+                    device_record = device_mapping.get(device_key, {})
+                    sales_status_record = sales_status_mapping.get(record_id, {})
                     
-                    final_terminal_status = terminal_record.get('terminalStatus', '') if terminal_record else ''
-                    final_terminal_type = 'CEPTEPOS'
-                    if sales_status_record and sales_status_record.get('terminal_type'):
-                        final_terminal_type = sales_status_record['terminal_type']
+                    final_device_status = device_record.get('deviceStatus', '') if device_record else ''
+                    final_record_type = 'TYPE_B'
+                    if sales_status_record and sales_status_record.get('record_type'):
+                        final_record_type = sales_status_record['record_type']
                     
                     data_exists = (
                         status != 'Not Sent' or
-                        vpos_define or
-                        terminal_record or
+                        secondary_define or
+                        device_record or
                         sales_status_record or
                         org_id
                     )
                     
                     if data_exists:
                         row = [
-                            mali_no, org_id, bank_name, status,
-                            vpos_define.get('submission_date', ''),
-                            vpos_define.get('response_date', ''), '', '',
+                            record_id, org_id, source_name, status,
+                            secondary_define.get('submission_date', ''),
+                            secondary_define.get('response_date', ''), '', '',
                             'Installation',
                             sales_status_record.get('sales_status', ''),
-                            final_terminal_type, final_terminal_status,
-                            terminal_record.get('brand', '') if terminal_record else '',
-                            terminal_record.get('model', '') if terminal_record else '',
-                            terminal_record.get('simId', '') if terminal_record else '',
-                            terminal_record.get('imei', '') if terminal_record else '',
-                            terminal_record.get('operator', '') if terminal_record else '',
-                            terminal_record.get('lastCommunication', '') if terminal_record else '',
-                            terminal_record.get('bankMid', '') if terminal_record else '',
-                            terminal_record.get('bankTid', '') if terminal_record else ''
-                        ]
-                        historic_rows.append(row)
-            
-            # Process mali numbers found only in other data sources
-            if mali_no not in db_mapping and mali_no not in vpos_db_mapping:
-                sales_status_record = sales_status_mapping.get(mali_no, {})
-                
-                # Search terminal data
-                related_banks = set()
-                for key in terminal_mapping.keys():
-                    if key.startswith(f"{mali_no}|"):
-                        bank_name = key.split('|')[1]
-                        related_banks.add(bank_name)
-                
-                # Search bank submissions
-                for bank in BANKS:
-                    if mali_no in bank_mapping[bank] or mali_no in cancellation_mapping[bank]:
-                        related_banks.add(bank)
-                
-                # Search VPOS submissions
-                for bank in VPOS_BANKS:
-                    if mali_no in vpos_define_mapping[bank]:
-                        related_banks.add(bank)
-                
-                # If no bank relations but sales status exists, add default banks
-                if not related_banks and sales_status_record:
-                    if sales_status_record.get('terminal_type') == 'CEPTEPOS':
-                        related_banks = set(VPOS_BANKS)
-                    else:
-                        related_banks = set(BANKS)
-                
-                for bank_name in related_banks:
-                    terminal_key = f"{mali_no}|{bank_name}"
-                    terminal_record = terminal_mapping.get(terminal_key, {})
-                    
-                    bank_record = bank_mapping.get(bank_name, {}).get(mali_no, {})
-                    cancellation_record = cancellation_mapping.get(bank_name, {}).get(mali_no, {})
-                    vpos_define = vpos_define_mapping.get(bank_name, {}).get(mali_no, {})
-                    
-                    cancellation_submission = cancellation_record.get('submission_date', '')
-                    cancellation_response = cancellation_record.get('response_date', '')
-                    request_type = determine_request_type(cancellation_submission, cancellation_response)
-                    
-                    final_terminal_status = terminal_record.get('terminalStatus', '') if terminal_record else ''
-                    final_terminal_type = sales_status_record.get('terminal_type', '') if sales_status_record else ''
-                    
-                    data_exists = (
-                        terminal_record or
-                        sales_status_record or
-                        bank_record or
-                        cancellation_record or
-                        vpos_define
-                    )
-                    
-                    if data_exists:
-                        row = [
-                            mali_no, '', bank_name, 'Not Sent',
-                            bank_record.get('submission_date', '') or vpos_define.get('submission_date', ''),
-                            bank_record.get('response_date', '') or vpos_define.get('response_date', ''),
-                            cancellation_record.get('submission_date', ''),
-                            cancellation_record.get('response_date', ''),
-                            request_type,
-                            sales_status_record.get('sales_status', ''),
-                            final_terminal_type, final_terminal_status,
-                            terminal_record.get('brand', '') if terminal_record else '',
-                            terminal_record.get('model', '') if terminal_record else '',
-                            terminal_record.get('simId', '') if terminal_record else '',
-                            terminal_record.get('imei', '') if terminal_record else '',
-                            terminal_record.get('operator', '') if terminal_record else '',
-                            terminal_record.get('lastCommunication', '') if terminal_record else '',
-                            terminal_record.get('bankMid', '') if terminal_record else '',
-                            terminal_record.get('bankTid', '') if terminal_record else ''
+                            final_record_type, final_device_status,
+                            device_record.get('brand', '') if device_record else '',
+                            device_record.get('model', '') if device_record else '',
+                            device_record.get('deviceId', '') if device_record else '',
+                            device_record.get('serialNumber', '') if device_record else '',
+                            device_record.get('provider', '') if device_record else '',
+                            device_record.get('lastContact', '') if device_record else '',
+                            device_record.get('sourceId', '') if device_record else '',
+                            device_record.get('deviceCode', '') if device_record else ''
                         ]
                         historic_rows.append(row)
             
             processed_count += 1
             if processed_count % 25000 == 0:
-                print(f"   Processed: {processed_count:,}/{len(all_mali_numbers):,} - Historic: {len(historic_rows):,}")
+                print(f"   Processed: {processed_count:,}/{len(all_record_ids):,} - Historic: {len(historic_rows):,}")
         
         # Alphabetical sorting
         print("   Performing alphabetical sorting...")
@@ -717,37 +660,38 @@ def create_terminal_management_excel_jupyter():
         # Statistics
         installation_count = sum(1 for row in historic_rows if row[8] == 'Installation')
         deletion_count = sum(1 for row in historic_rows if row[8] == 'Deletion')
-        physical_pos_count = sum(1 for row in historic_rows if row[10] == 'PHYSICAL POS')
-        ceptepos_count = sum(1 for row in historic_rows if row[10] == 'CEPTEPOS')
-        active_count = sum(1 for row in historic_rows if row[9] == 'Active')
-        passive_count = sum(1 for row in historic_rows if row[9] == 'Passive')
+        type_a_count = sum(1 for row in historic_rows if row[10] == 'TYPE_A')
+        type_b_count = sum(1 for row in historic_rows if row[10] == 'TYPE_B')
+        status1_count = sum(1 for row in historic_rows if row[9] == 'Status1')
+        status2_count = sum(1 for row in historic_rows if row[9] == 'Status2')
         completed_count = sum(1 for row in historic_rows if row[3] == 'Completed')
         rejected_count = sum(1 for row in historic_rows if row[3] == 'Rejected')
         awaiting_count = sum(1 for row in historic_rows if row[3] == 'Awaiting Response')
         not_sent_count = sum(1 for row in historic_rows if row[3] == 'Not Sent')
         
         print(f"   Request Type: {installation_count:,} Installation, {deletion_count:,} Deletion")
-        print(f"   Terminal Type: {physical_pos_count:,} PHYSICAL POS, {ceptepos_count:,} CEPTEPOS")
-        print(f"   Sales Status: {active_count:,} Active, {passive_count:,} Passive")
-        print(f"   Bank Status: {completed_count:,} Completed, {rejected_count:,} Rejected, {awaiting_count:,} Awaiting Response, {not_sent_count:,} Not Sent")
+        print(f"   Record Type: {type_a_count:,} TYPE_A, {type_b_count:,} TYPE_B")
+        print(f"   Sales Status: {status1_count:,} Status1, {status2_count:,} Status2")
+        print(f"   Data Status: {completed_count:,} Completed, {rejected_count:,} Rejected, {awaiting_count:,} Awaiting Response, {not_sent_count:,} Not Sent")
         
         # Memory cleanup
-        del raw_data, db_mapping, vpos_db_mapping, bank_mapping, cancellation_mapping, terminal_mapping, sales_status_mapping, vpos_define_mapping
+        del raw_data, db_mapping, secondary_db_mapping, data_mapping, cancellation_mapping, device_mapping, sales_status_mapping, secondary_define_mapping
         gc.collect()
         
         print("\n8. Creating Jupyter local Excel files...")
         excel_start = time.time()
         
+        # USER CONFIG: Modify column headers according to your requirements
         column_headers = [
-            'Mali No', 'Org ID', 'Bank Name', 'Bank Status',
-            'Bank Submission Date', 'Bank Installation Date', 'Cancellation Submission', 'Cancellation Response',
-            'Request Type', 'Sales Status', 'Terminal Type', 'Terminal Status',
-            'Brand', 'Model', 'Sim ID', 'IMEI', 'Operator',
-            'Last Communication', 'Bank MID', 'Bank TID'
+            'Record ID', 'Organization ID', 'Data Source', 'Processing Status',
+            'Submission Date', 'Response Date', 'Cancellation Submission', 'Cancellation Response',
+            'Request Type', 'Sales Status', 'Record Type', 'Device Status',
+            'Brand', 'Model', 'Device ID', 'Serial Number', 'Provider',
+            'Last Contact', 'Source ID', 'Device Code'
         ]
         
-        # 100K rows per file
-        CHUNK_SIZE = 100000
+        # USER CONFIG: Modify chunk size (rows per Excel file)
+        CHUNK_SIZE = 100000  # Options: 50000, 100000, 150000, 200000
         total_rows = len(historic_rows)
         total_chunks = max(1, (total_rows + CHUNK_SIZE - 1) // CHUNK_SIZE)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M")
@@ -776,7 +720,8 @@ def create_terminal_management_excel_jupyter():
             if chunk_size_actual == 0:
                 continue
             
-            excel_file_name = f"terminal_management_system{file_number:02d}_{timestamp}.xlsx"
+            # USER CONFIG: Modify output file naming pattern
+            excel_file_name = f"data_management_system{file_number:02d}_{timestamp}.xlsx"
             
             # Create file
             success, file_size = create_excel_file_jupyter(chunk_data, excel_file_name, column_headers)
@@ -792,7 +737,7 @@ def create_terminal_management_excel_jupyter():
         total_duration = time.time() - GLOBAL_START
         
         print("\n" + "=" * 60)
-        print("JUPYTER TERMINAL MANAGEMENT SYSTEM COMPLETED SUCCESSFULLY")
+        print("JUPYTER DATA MANAGEMENT SYSTEM COMPLETED SUCCESSFULLY")
         print("=" * 60)
         
         print(f"FINAL RESULTS:")
@@ -818,37 +763,30 @@ def create_terminal_management_excel_jupyter():
         
         print(f"\nDATA ANALYSIS:")
         print(f"   • Request Type: {installation_count:,} Installation, {deletion_count:,} Deletion")
-        print(f"   • Terminal Type: {physical_pos_count:,} PHYSICAL POS, {ceptepos_count:,} CEPTEPOS")
-        print(f"   • Sales Status: {active_count:,} Active, {passive_count:,} Passive")
-        print(f"   • Bank Status: {completed_count:,} Completed, {rejected_count:,} Rejected, {awaiting_count:,} Awaiting Response, {not_sent_count:,} Not Sent")
+        print(f"   • Record Type: {type_a_count:,} TYPE_A, {type_b_count:,} TYPE_B")
+        print(f"   • Sales Status: {status1_count:,} Status1, {status2_count:,} Status2")
+        print(f"   • Processing Status: {completed_count:,} Completed, {rejected_count:,} Rejected, {awaiting_count:,} Awaiting Response, {not_sent_count:,} Not Sent")
         
-        print(f"\nPERFORMACE METRICS:")
+        print(f"\nPERFORMANCE METRICS:")
         print(f"   • Parallel Data Retrieval: {data_duration:.1f} seconds")
         print(f"   • Fast Data Processing: {processing_duration:.1f} seconds")
         print(f"   • Historic Creation: {historic_duration:.1f} seconds")
         print(f"   • Excel Creation: {excel_duration:.1f} seconds")
         print(f"   • TOTAL PROCESSING TIME: {total_duration:.1f} seconds ({total_duration/60:.1f} minutes)")
         
-        print(f"\nJUPYTER ADVANTAGES:")
-        print(f"   • Download issues completely resolved")
-        print(f"   • Files saved in notebook folder")
-        print(f"   • Local disk usage")
-        print(f"   • Can be re-executed anytime")
-        print(f"   • Faster processing")
-        print(f"   • 100% reliable results")
-        print(f"   • All files ready for use")
-        
         print("=" * 60)
-        print("JUPYTER TERMINAL MANAGEMENT SYSTEM COMPLETED SUCCESSFULLY")
+        print("JUPYTER DATA MANAGEMENT SYSTEM COMPLETED SUCCESSFULLY")
         
     except Exception as e:
         print(f"Processing error: {e}")
 
 def create_excel_report():
+    """Execute full Excel report generation"""
     print(f"\nSTARTING JUPYTER EXCEL REPORT...")
-    create_terminal_management_excel_jupyter()
+    create_data_management_excel_jupyter()
 
 def quick_test():
+    """Generate quick test file with sample data"""
     print(f"\nJUPYTER QUICK TEST - 1000 ROW SAMPLE")
     
     test_data = []
@@ -857,22 +795,22 @@ def quick_test():
         status = status_examples[i % 4]
         
         test_data.append([
-            f'TEST{i:06d}', f'ORG{i:06d}', 'HALKBANK', status,
+            f'TEST{i:06d}', f'ORG{i:06d}', 'DATA1', status,
             '26.08.2024 09:00', '26.08.2024 09:30', '', '',
-            'Installation', 'Active', 'PHYSICAL POS', 'Active',
-            'PAX', 'A920', f'SIM{i:06d}', f'IMEI{i:09d}', 'Turkcell',
-            '26.08.2024 10:00', f'MID{i:06d}', f'TID{i:06d}'
+            'Installation', 'Status2', 'TYPE_A', 'Active',
+            'BRAND_A', 'MODEL_A', f'DEV{i:06d}', f'SER{i:09d}', 'PROVIDER_A',
+            '26.08.2024 10:00', f'SRC{i:06d}', f'CODE{i:06d}'
         ])
     
     column_headers = [
-        'Mali No', 'Org ID', 'Bank Name', 'Bank Status',
-        'Bank Submission Date', 'Bank Installation Date', 'Cancellation Submission', 'Cancellation Response',
-        'Request Type', 'Sales Status', 'Terminal Type', 'Terminal Status',
-        'Brand', 'Model', 'Sim ID', 'IMEI', 'Operator',
-        'Last Communication', 'Bank MID', 'Bank TID'
+        'Record ID', 'Organization ID', 'Data Source', 'Processing Status',
+        'Submission Date', 'Response Date', 'Cancellation Submission', 'Cancellation Response',
+        'Request Type', 'Sales Status', 'Record Type', 'Device Status',
+        'Brand', 'Model', 'Device ID', 'Serial Number', 'Provider',
+        'Last Contact', 'Source ID', 'Device Code'
     ]
     
-    test_file = f"terminal_management_test_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+    test_file = f"data_management_test_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
     
     success, file_size = create_excel_file_jupyter(test_data, test_file, column_headers)
     
@@ -883,7 +821,7 @@ def quick_test():
         print(f"   Failed to create test file")
 
 print(f"\n" + "="*60)
-print(f"JUPYTER TERMINAL MANAGEMENT SYSTEM READY")
+print(f"JUPYTER DATA MANAGEMENT SYSTEM READY")
 print(f"="*60)
 print(f"USAGE OPTIONS:")
 print(f"")
@@ -893,25 +831,22 @@ print(f"")
 print(f"2. FULL EXCEL REPORT (local save):")
 print(f"   create_excel_report()")
 print(f"")
-print(f"JUPYTER NOTEBOOK ADVANTAGES:")
-print(f"   • Local computer environment")
-print(f"   • Files saved in notebook folder")
-print(f"   • Download issues completely eliminated")
-print(f"   • 100K rows per file (optimal size)")
-print(f"   • Fully formatted Excel (colors, formats, conditional formatting)")
-print(f"   • Faster processing (local resources)")
-print(f"   • Can be re-executed anytime")
-print(f"   • Unlimited disk space")
-print(f"   • 100% reliable results")
-print(f"")
-print(f"IMPORTANT SETUP NOTES:")
+print(f"CONFIGURATION REQUIREMENTS:")
 print(f"   1. Replace YOUR_PROJECT_ID with your actual project ID")
 print(f"   2. Replace YOUR_PRIVATE_KEY with your actual private key")
 print(f"   3. Replace YOUR_CLIENT_EMAIL with your service account email")
-print(f"   4. Replace spreadsheet IDs with your actual IDs")
-print(f"   5. Invite service account email to your Google Sheets as Editor")
+print(f"   4. Replace GOOGLESHEET1_ID, GOOGLESHEET2_ID, GOOGLESHEET3_ID")
+print(f"   5. Replace sheet names: MainData, Submissions, Cancellations, etc.")
+print(f"   6. Invite service account email to your Google Sheets as Editor")
 print(f"")
-print(f"START IMMEDIATELY:")
+print(f"CUSTOMIZABLE SETTINGS:")
+print(f"   • DATA_SOURCES: Modify data source names")
+print(f"   • SECONDARY_SOURCES: Modify secondary source names")
+print(f"   • CHUNK_SIZE: Change rows per Excel file")
+print(f"   • column_headers: Customize Excel column names")
+print(f"   • Schema mappings: Adjust column indices for your data structure")
+print(f"")
+print(f"START COMMANDS:")
 print(f"   quick_test()           # For testing")
 print(f"   create_excel_report()  # For full report")
 print("="*60)
